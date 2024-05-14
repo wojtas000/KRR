@@ -79,7 +79,6 @@ class TransitionGraph:
         self.set_initial_state(StateNode(fluent_dict))
 
     def parse_causes(self, statement: str) -> None:
-        print(self.states)
         action, effect = statement.split(" causes ")
         effect_fluents = effect.split(" with time ")[0].split(" and ")
         duration = int(effect.split(" with time ")[1].strip().split(" ")[0])
@@ -91,7 +90,10 @@ class TransitionGraph:
             else:
                 effect_dict[fluent] = True
         for state in self.states.copy():
-            if precondition is None:
+            if precondition is None or all(
+                state.fluents.get(fluent[1:], True) == (not fluent.startswith("~"))
+                for fluent in precondition.split(" and ")
+            ):
                 new_fluents = state.fluents.copy()
                 new_fluents.update(effect_dict)
                 new_state = StateNode(new_fluents)
