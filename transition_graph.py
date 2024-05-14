@@ -7,8 +7,7 @@ from typing import List, Dict, Union
 class StateNode:
     def __init__(self, fluents: Dict[str, bool]):
         self.fluents = fluents
-        self.label = "\n".join([f"{fluent}: {str(value).lower()}"
-                                for fluent, value in fluents.items()])
+        self.label = "\n".join([fluent if value else f"~{fluent}" for fluent, value in fluents.items()])
 
     def __eq__(self, other: 'StateNode') -> bool:
         return self.fluents == other.fluents
@@ -61,10 +60,10 @@ class TransitionGraph:
         nx.draw_networkx_nodes(G, pos, node_size=500, ax=ax)
         nx.draw_networkx_edges(G, pos, edge_color='black', arrows=True, ax=ax)
         nx.draw_networkx_labels(G, pos, labels={node: G.nodes[node]['label']
-                                                for node in G.nodes()}, ax=ax)
+                                                for node in G.nodes()}, ax=ax, font_size=6)
         nx.draw_networkx_edge_labels(G, pos,
                                      edge_labels=nx.get_edge_attributes(G, 'label'),
-                                     ax=ax)
+                                     ax=ax, font_size=8)
         ax.axis('off')
         return fig
 
@@ -80,6 +79,7 @@ class TransitionGraph:
         self.set_initial_state(StateNode(fluent_dict))
 
     def parse_causes(self, statement: str) -> None:
+        print(self.states)
         action, effect = statement.split(" causes ")
         effect_fluents = effect.split(" with time ")[0].split(" and ")
         duration = int(effect.split(" with time ")[1].strip().split(" ")[0])
@@ -90,7 +90,7 @@ class TransitionGraph:
                 effect_dict[fluent[1:]] = False
             else:
                 effect_dict[fluent] = True
-        for state in self.states:
+        for state in self.states.copy():
             if precondition is None:
                 new_fluents = state.fluents.copy()
                 new_fluents.update(effect_dict)

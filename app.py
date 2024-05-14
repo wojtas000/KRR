@@ -2,20 +2,18 @@ import streamlit as st
 from transition_graph import TransitionGraph
 
 st.title("Action Domain Transition Graph")
+if "graph" not in st.session_state:
+    st.session_state.graph = TransitionGraph()
 
-graph = TransitionGraph()
 
-# Add states and edges
-
+# States and edges
 new_statement = st.text_input("Enter a statement:")
 if st.button("Add Statement"):
-    graph.parse_statement(new_statement)
-    fig = graph.generate_graph()
+    st.session_state.graph.parse_statement(new_statement)
+    fig = st.session_state.graph.generate_graph()
     st.pyplot(fig)
 
-
-# Execute queries
-
+# Queries
 st.subheader("Queries")
 query = st.text_input("Enter a query:")
 if st.button("Execute Query"):
