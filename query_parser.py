@@ -27,7 +27,7 @@ class QueryParser:
 
     def parse_executability_time_query(self, query: str) -> bool:
         necessity, _, actions, _, time_str, _, condition = query.split("  ")
-        time_limit = int(time_str.split(" ")[1])
+        time_limit = int(time_str.split(" ")[0])
         return self.check_query(necessity, actions.split(","), condition, time_limit=time_limit)
 
     def check_query(self, necessity: str, actions: List[str], condition: str, formula: str = None, time_limit: int = None) -> bool:

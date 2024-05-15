@@ -27,6 +27,10 @@ The insertion can be done either one by one or all together, with each statement
 
 ``` necessary  executable  WASH_CAR,MOW_LAWN  from  ~car_washed and ~lawn_mowed and ~gift_bought ```
 
+#### Executability query with time
+
+``` necessary  executable  WASH_CAR,MOW_LAWN  with time  120 minutes  from  ~car_washed and ~lawn_mowed and ~gift_bought ```  
+
 #### Value query
 
 ``` necessary  car_washed  after  GIFT_BOUGHT,MOW_LAWN  from  ~car_washed and ~lawn_mowed and ~gift_bought ```
