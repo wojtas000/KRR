@@ -12,10 +12,21 @@ streamlit run app.py
 ```
 
 ## Example 
-Insert statements one by one:
 
-1. ```initially ~car_washed and ~lawn_mowed and ~gift_bought and ~ready_for_party```
-2. ```WASH_CAR causes car_washed with time 30 minutes```
-3. ```MOW_LAWN causes lawn_mowed with time 75 minutes```
-4. ```BUY_GIFT causes gift_bought with time 90 minutes```
-5. ```GET_READY causes ready_for_party with time 45 minutes```
+### Insert statements
+The insertion can be done either one by one or all together, with each statement in separate line:
+
+1. ```initially ~car_washed and ~lawn_mowed and ~gift_bought```
+2. ```WASH_CAR causes car_washed with time 30 minutes if ~car_washed```
+3. ```MOW_LAWN causes lawn_mowed with time 75 minutes if ~lawn_mowed```
+4. ```BUY_GIFT causes gift_bought with time 90 minutes if ~gift_bought```
+
+### Query the system:
+
+#### Executability query
+
+``` necessary  executable  WASH_CAR,MOW_LAWN  from  ~car_washed and ~lawn_mowed and ~gift_bought ```
+
+#### Value query
+
+``` necessary  car_washed  after  GIFT_BOUGHT,MOW_LAWN  from  ~car_washed and ~lawn_mowed and ~gift_bought ```
