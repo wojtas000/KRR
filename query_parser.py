@@ -1,3 +1,7 @@
+from transition_graph import TransitionGraph, StateNode, Edge
+from typing import List, Tuple
+
+
 class QueryParser:
     def __init__(self, graph: TransitionGraph):
         self.graph = graph
@@ -14,17 +18,17 @@ class QueryParser:
             raise ValueError("Invalid query format.")
 
     def parse_value_query(self, query: str) -> bool:
-        necessity, formula, _, actions, _, condition = query.split(" ")
-        return self.check_query(necessity, actions.split(", "), condition, formula)
+        necessity, formula, _, actions, _, condition = query.split("  ")
+        return self.check_query(necessity, actions.split(","), condition, formula)
 
     def parse_executability_query(self, query: str) -> bool:
-        necessity, _, actions, _, condition = query.split(" ")
-        return self.check_query(necessity, actions.split(", "), condition)
+        necessity, _, actions, _, condition = query.split("  ")
+        return self.check_query(necessity, actions.split(","), condition)
 
     def parse_executability_time_query(self, query: str) -> bool:
-        necessity, _, actions, _, time_str, _, condition = query.split(" ")
+        necessity, _, actions, _, time_str, _, condition = query.split("  ")
         time_limit = int(time_str.split(" ")[1])
-        return self.check_query(necessity, actions.split(", "), condition, time_limit=time_limit)
+        return self.check_query(necessity, actions.split(","), condition, time_limit=time_limit)
 
     def check_query(self, necessity: str, actions: List[str], condition: str, formula: str = None, time_limit: int = None) -> bool:
         for state in self.graph.states:

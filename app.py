@@ -7,13 +7,14 @@ st.title("Action Domain Transition Graph")
 if "graph" not in st.session_state:
     st.session_state.graph = TransitionGraph()
 
-# States and edges
-new_statement = st.text_input("Enter a statement:")
-if st.button("Add Statement"):
-    st.session_state.graph.parse_statement(new_statement)
-
-fig = st.session_state.graph.generate_graph()
-st.pyplot(fig)
+new_statements = st.text_area("Enter statements (one per line):", height=200)
+if st.button("Add Statements"):
+    statements = new_statements.split("\n")
+    for statement in statements:
+        if statement.strip():
+            st.session_state.graph.parse_statement(statement.strip())
+    fig = st.session_state.graph.generate_graph()
+    st.pyplot(fig)
 
 query_parser = QueryParser(st.session_state.graph)
 

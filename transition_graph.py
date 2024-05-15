@@ -34,6 +34,7 @@ class Edge:
 
 class TransitionGraph:
     def __init__(self):
+        self.all_states: List[StateNode] = []
         self.states: List[StateNode] = []
         self.edges: List[Edge] = []
         self.initial_state: Union[StateNode, None] = None
@@ -44,26 +45,33 @@ class TransitionGraph:
 
     def set_initial_state(self, state: StateNode) -> None:
         self.initial_state = state
+        self.fluents = list(state.fluents.keys())
+        self.all_states = [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]
+        self.add_state(state)
 
     def add_edge(self, source: StateNode, action: str,
                  target: StateNode, duration: int) -> None:
-        self.edges.append(Edge(source, action, target, duration))
+        edge = Edge(source, action, target, duration)
+        if edge not in self.edges:
+            self.edges.append(edge)
 
     def generate_graph(self) -> plt.Figure:
         G = nx.DiGraph()
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
-        for state in self.states:
+        for state in self.all_states:
             G.add_node(state, label=state.label)
         pos = nx.spring_layout(G)
-        fig, ax = plt.subplots(figsize=(8, 6))
-        nx.draw_networkx_nodes(G, pos, node_size=500, ax=ax)
+        fig, ax = plt.subplots(figsize=(16, 16))
+        nx.draw_networkx_nodes(G, pos, node_size=100, ax=ax)
         nx.draw_networkx_edges(G, pos, edge_color='black', arrows=True, ax=ax)
-        nx.draw_networkx_labels(G, pos, labels={node: G.nodes[node]['label']
-                                                for node in G.nodes()}, ax=ax, font_size=6)
+        labels = {node: node.label for node in G.nodes()}
+        nx.draw_networkx_labels(G, pos, labels=labels, ax=ax, font_size=6)
         nx.draw_networkx_edge_labels(G, pos,
-                                     edge_labels=nx.get_edge_attributes(G, 'label'),
-                                     ax=ax, font_size=8)
+                                    edge_labels=nx.get_edge_attributes(G, 'label'),
+                                    ax=ax, font_size=8)
+        if self.initial_state in G.nodes():
+            nx.draw_networkx_nodes(G, pos, nodelist=[self.initial_state], node_color='r', node_size=200, ax=ax)
         ax.axis('off')
         return fig
 
@@ -89,7 +97,7 @@ class TransitionGraph:
                 effect_dict[fluent[1:]] = False
             else:
                 effect_dict[fluent] = True
-        for state in self.states.copy():
+        for state in self.all_states:
             if precondition is None or all(
                 state.fluents.get(fluent[1:], True) == (not fluent.startswith("~"))
                 for fluent in precondition.split(" and ")
