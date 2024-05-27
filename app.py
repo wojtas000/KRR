@@ -1,6 +1,7 @@
 import streamlit as st
-from transition_graph import TransitionGraph
-from query_parser import QueryParser
+from source.graph.transition_graph import TransitionGraph
+from source.parsers.query_parser import QueryParser
+from source.parsers.statement_parser import StatementParser
 
 st.title("Action Domain Transition Graph")
 
