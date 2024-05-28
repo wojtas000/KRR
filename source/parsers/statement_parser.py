@@ -1,24 +1,22 @@
 import re
-
-from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 from typing import Tuple, List
-
+from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 class StatementParser:
 
     def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
 
     def extract_fluents(self, statement: str) -> List[str]:
-        fluents = re.findall(r'~?\b\w+', initial_logic)
+        fluents = re.findall(r'~?\b\w+', statement)
         fluents = [fluent.strip().lstrip('~') for fluent in fluents if fluent.strip() not in ["and", "or", "implies", "iff", "(", ")"]]
         return fluents
 
-    def evaluate_formula(formula: str, state: StateNode) -> bool:
+    def evaluate_formula(self, formula: str, state: StateNode) -> bool:
         for fluent, value in state.fluents.items():
             formula = formula.replace(f"~{fluent}", str(not value))
             formula = formula.replace(fluent, str(value))
 
-        formula = formula.replace("iff", "==")
+        formula = formula.replace("iff", "==") 
         formula = f"({formula})"
         return eval(formula)
 
@@ -30,7 +28,7 @@ class StatementParser:
             self.transition_graph.add_fluent(fluent)
         
         for state in self.transition_graph.generate_all_states():
-            if evaluate_formula(initial_logic, state):
+            if self.evaluate_formula(initial_logic, state):
                 self.transition_graph.add_possible_initial_state(state)
 
     def parse_causes(self, statement: str) -> None:
@@ -49,7 +47,7 @@ class StatementParser:
         all_states = self.transition_graph.generate_all_states()
         for from_state in all_states:
             for to_state in all_states:
-                if (evaluate_formula(precondition_formula, from_state) or not precondition_formula) and evaluate_formula(effect_formula, to_state):
+                if (self.evaluate_formula(precondition_formula, from_state) or not precondition_formula) and self.evaluate_formula(effect_formula, to_state):
                     self.transition_graph.add_state(from_state)
                     self.transition_graph.add_state(to_state)
                     self.transition_graph.add_edge(from_state, action, to_state)
@@ -68,7 +66,7 @@ class StatementParser:
 
         all_states = self.transition_graph.generate_all_states()
         for from_state in all_states:
-            if evaluate_formula(precondition_formula, from_state):
+            if self.evaluate_formula(precondition_formula, from_state):
                 self.transition_graph.add_state(state)
                 to_state = StateNode(state.fluents.copy())
                 for fluent in effect_fluents:
@@ -77,9 +75,10 @@ class StatementParser:
 
     def parse_duration(self, statement: str) -> None:
         action, duration = statement.split(" lasts ")
-        for edge in self.transition_graph.edges:
-            if edge.action == action:
+        for i, edge in enumerate(self.transition_graph.edges):
+            if edge.action == action.strip() and edge.source != edge.target:
                 edge.add_duration(int(duration))
+                self.transition_graph.edges[i] = edge
 
     def parse_statement(self, statement: str) -> None:
         if statement.startswith("initially"):
@@ -90,3 +89,5 @@ class StatementParser:
             self.parse_releases(statement)
         elif "lasts" in statement:
             self.parse_duration(statement)
+
+        self.transition_graph.update_states_with_new_fluents()

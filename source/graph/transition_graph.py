@@ -37,6 +37,7 @@ class Edge:
 
     def add_duration(self, duration: int) -> None:
         self.duration += duration
+        self.label = f"{self.action}\nDuration: {duration}"
 
 
 class TransitionGraph:
@@ -66,16 +67,19 @@ class TransitionGraph:
         return [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]
 
     def add_edge(self, source: StateNode, action: str,
-                 target: StateNode, duration: int) -> None:
+                 target: StateNode, duration: int = 0) -> None:
         edge = Edge(source, action, target, duration)
         if edge not in self.edges:
             self.edges.append(edge)
+
+    def update_states_with_new_fluents(self) -> None:
+        pass
 
     def generate_graph(self) -> plt.Figure:
         G = nx.DiGraph()
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
-        for state in self.all_states:
+        for state in self.generate_all_states():
             G.add_node(state, label=state.label)
         pos = nx.spring_layout(G)
         fig, ax = plt.subplots(figsize=(16, 16))
@@ -86,9 +90,6 @@ class TransitionGraph:
         nx.draw_networkx_edge_labels(G, pos,
                                     edge_labels=nx.get_edge_attributes(G, 'label'),
                                     ax=ax, font_size=8)
-        if self.initial_state in G.nodes():
-            nx.draw_networkx_nodes(G, pos, nodelist=[self.initial_state], node_color='r', node_size=200, ax=ax)
-        ax.axis('off')
 
         def on_zoom(event):
             ax.set_xlim(event.xdata - 0.5, event.xdata + 0.5)
