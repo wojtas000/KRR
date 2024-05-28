@@ -36,7 +36,7 @@ class Edge:
         return f"{self.source} --{self.action}--> {self.target} ({self.duration})"
 
     def add_duration(self, duration: int) -> None:
-        self.duration += duration
+        self.duration = duration
         self.label = f"{self.action}\nDuration: {duration}"
 
 
