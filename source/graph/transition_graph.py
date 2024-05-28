@@ -42,6 +42,7 @@ class Edge:
 class TransitionGraph:
     def __init__(self):
         self.fluents: List[str] = []
+        self.actions: List[str] = []
         self.states: List[StateNode] = []
         self.edges: List[Edge] = []
         self.possible_initial_states = []
@@ -56,6 +57,10 @@ class TransitionGraph:
     def add_state(self, state: StateNode) -> None:
         if state not in self.states:
             self.states.append(state)
+
+    def add_action(self, action: str) -> None:
+        if action not in self.actions:
+            self.actions.append(action)
 
     def generate_all_states(self) -> None:
         return [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]

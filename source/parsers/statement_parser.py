@@ -35,53 +35,51 @@ class StatementParser:
 
     def parse_causes(self, statement: str) -> None:
 
-        state_node_list = []
-        edge_list = []
-
         action, effect = statement.split(" causes ")
-        effect_fluents = effect.split(" if ")[0].split(" and ")
-        precondition = effect.split(" if ")[1] if " if " in effect else None
-        effect_dict = {}
-        for fluent in effect_fluents:
-            if fluent.startswith("~"):
-                effect_dict[fluent[1:]] = False
-            else:
-                effect_dict[fluent] = True
-        for state in self.transition_graph.all_states:
-            if precondition is None or all(
-                state.fluents.get(fluent[1:], True) == (not fluent.startswith("~"))
-                for fluent in precondition.split(" and ")
-            ):
-                new_fluents = state.fluents.copy()
-                new_fluents.update(effect_dict)
-                new_state = StateNode(new_fluents)
-                state_node_list.append(new_state)
-                edge_list.append(Edge(state, action, new_state))
-        return state_node_list, edge_list
+        
+        effect_formula = effect.split(" if ")[0].strip()
+        effect_fluents = self.extract_fluents(effect_formula)
+        
+        precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
+        precondition_fluents = self.extract_fluents(precondition_formula)
+
+        for fluent in effect_fluents + precondition_fluents:
+            self.transition_graph.add_fluent(fluent)
+
+        all_states = self.transition_graph.generate_all_states()
+        for from_state in all_states:
+            for to_state in all_states:
+                if (evaluate_formula(precondition_formula, from_state) or not precondition_formula) and evaluate_formula(effect_formula, to_state):
+                    self.transition_graph.add_state(from_state)
+                    self.transition_graph.add_state(to_state)
+                    self.transition_graph.add_edge(from_state, action, to_state)
 
     def parse_releases(self, statement: str) -> None:
         action, effect = statement.split(" releases ")
-        effect_fluents = effect.split(" if ")[0].split(" and ")
-        precondition = effect.split(" if ")[1] if " if " in effect else None
-        effect_dict = {}
-        for fluent in effect_fluents:
-            effect_dict[fluent] = False
-        for state in self.transition_graph.all_states:
-            if precondition is None or all(
-                state.fluents.get(fluent[1:], True) == (not fluent.startswith("~"))
-                for fluent in precondition.split(" and ")
-            ):
-                new_fluents = state.fluents.copy()
-                for fluent, value in effect_dict.items():
-                    new_fluents[fluent] = not new_fluents[fluent]
-                new_state = StateNode(new_fluents)
-                self.transition_graph.add_state(new_state)
-                duration = self.transition_graph.action_durations.get(action, 1)
-                self.transition_graph.add_edge(state, action, new_state, duration)
+        
+        effect_formula = effect.split(" if ")[0].strip()
+        effect_fluents = self.extract_fluents(effect_formula)
+        
+        precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
+        precondition_fluents = self.extract_fluents(precondition_formula)
+
+        for fluent in effect_fluents + precondition_fluents:
+            self.transition_graph.add_fluent(fluent)
+
+        all_states = self.transition_graph.generate_all_states()
+        for from_state in all_states:
+            if evaluate_formula(precondition_formula, from_state):
+                self.transition_graph.add_state(state)
+                to_state = StateNode(state.fluents.copy())
+                for fluent in effect_fluents:
+                    to_state.fluents[fluent] = not from_state.fluents[fluent]
+                self.transition_graph.add_edge(from_state, action, to_state)
 
     def parse_duration(self, statement: str) -> None:
         action, duration = statement.split(" lasts ")
-        self.transition_graph.action_durations[action] = int(duration)
+        for edge in self.transition_graph.edges:
+            if edge.action == action:
+                edge.add_duration(int(duration))
 
     def parse_statement(self, statement: str) -> None:
         if statement.startswith("initially"):
