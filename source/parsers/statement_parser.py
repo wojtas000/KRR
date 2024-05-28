@@ -1,22 +1,43 @@
-from source.graph.transition_graph import TransitionGraph
+import re
 
+from source.graph.transition_graph import TransitionGraph, StateNode, Edge
+from typing import Tuple, List
 
 class StatementParser:
-    def init(self, transition_graph: TransitionGraph):
+
+    def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
 
+    def extract_fluents(self, statement: str) -> List[str]:
+        fluents = re.findall(r'~?\b\w+', initial_logic)
+        fluents = [fluent.strip().lstrip('~') for fluent in fluents if fluent.strip() not in ["and", "or", "implies", "iff", "(", ")"]]
+        return fluents
+
+    def evaluate_formula(formula: str, state: StateNode) -> bool:
+        for fluent, value in state.fluents.items():
+            formula = formula.replace(f"~{fluent}", str(not value))
+            formula = formula.replace(fluent, str(value))
+
+        formula = formula.replace("iff", "==")
+        formula = f"({formula})"
+        return eval(formula)
+
     def parse_initially(self, statement: str) -> None:
-        fluents = statement.split("initially ")[1].split(" and ")
-        fluent_dict = {}
+        initial_logic = statement.split("initially ")[1]
+        fluents = self.extract_fluents(initial_logic)
+        
         for fluent in fluents:
-            if fluent.startswith("~"):
-                fluent_dict[fluent[1:]] = False
-            else:
-                fluent_dict[fluent] = True
-        self.transition_graph.add_state(StateNode(fluent_dict))
-        self.transition_graph.set_initial_state(StateNode(fluent_dict))
+            self.transition_graph.add_fluent(fluent)
+        
+        for state in self.transition_graph.generate_all_states():
+            if evaluate_formula(initial_logic, state):
+                self.transition_graph.add_possible_initial_state(state)
 
     def parse_causes(self, statement: str) -> None:
+
+        state_node_list = []
+        edge_list = []
+
         action, effect = statement.split(" causes ")
         effect_fluents = effect.split(" if ")[0].split(" and ")
         precondition = effect.split(" if ")[1] if " if " in effect else None
@@ -34,9 +55,9 @@ class StatementParser:
                 new_fluents = state.fluents.copy()
                 new_fluents.update(effect_dict)
                 new_state = StateNode(new_fluents)
-                self.transition_graph.add_state(new_state)
-                duration = self.transition_graph.action_durations.get(action, 1)
-                self.transition_graph.add_edge(state, action, new_state, duration)
+                state_node_list.append(new_state)
+                edge_list.append(Edge(state, action, new_state))
+        return state_node_list, edge_list
 
     def parse_releases(self, statement: str) -> None:
         action, effect = statement.split(" releases ")

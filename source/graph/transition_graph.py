@@ -18,10 +18,14 @@ class StateNode:
     def __str__(self) -> str:
         return self.label
 
+    def update(self, fluents: Dict[str, bool]) -> None:
+        self.fluents.update(fluents)
+        self.label = "\n".join([fluent if value else f"~{fluent}" for fluent, value in self.fluents.items()])
+
 
 class Edge:
     def __init__(self, source: StateNode, action: str,
-                 target: StateNode, duration: int):
+                 target: StateNode, duration: int = 0):
         self.source = source
         self.action = action
         self.target = target
@@ -31,23 +35,30 @@ class Edge:
     def __str__(self) -> str:
         return f"{self.source} --{self.action}--> {self.target} ({self.duration})"
 
+    def add_duration(self, duration: int) -> None:
+        self.duration += duration
+
 
 class TransitionGraph:
     def __init__(self):
-        self.all_states: List[StateNode] = []
+        self.fluents: List[str] = []
         self.states: List[StateNode] = []
         self.edges: List[Edge] = []
-        self.initial_state: Union[StateNode, None] = None
+        self.possible_initial_states = []
+
+    def add_fluent(self, fluent: str) -> None:
+        if fluent not in self.fluents:
+            self.fluents.append(fluent)
+
+    def add_possible_initial_state(self, state: StateNode) -> None:
+        self.possible_initial_states.append(state)
 
     def add_state(self, state: StateNode) -> None:
         if state not in self.states:
             self.states.append(state)
 
-    def set_initial_state(self, state: StateNode) -> None:
-        self.initial_state = state
-        self.fluents = list(state.fluents.keys())
-        self.all_states = [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]
-        self.add_state(state)
+    def generate_all_states(self) -> None:
+        return [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]
 
     def add_edge(self, source: StateNode, action: str,
                  target: StateNode, duration: int) -> None:
