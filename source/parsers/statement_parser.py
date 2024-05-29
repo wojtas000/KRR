@@ -47,10 +47,27 @@ class StatementParser:
         all_states = self.transition_graph.generate_all_states()
         for from_state in all_states:
             for to_state in all_states:
-                if (self.evaluate_formula(precondition_formula, from_state) or not precondition_formula) and self.evaluate_formula(effect_formula, to_state):
+                if self.precondition_met(from_state, precondition_formula) and self.is_correct_transition(from_state, to_state, effect_fluents, effect_formula):
                     self.transition_graph.add_state(from_state)
                     self.transition_graph.add_state(to_state)
                     self.transition_graph.add_edge(from_state, action, to_state)
+
+    def precondition_met(self, state: StateNode, precondition: str) -> bool:
+        return self.evaluate_formula(precondition, state) or not precondition
+
+    def is_correct_transition(self, from_state: StateNode, to_state: StateNode, effect_fluents: List[str], effect: str) -> bool:
+        
+        postcondition_met = self.evaluate_formula(effect, to_state)
+        
+        def non_effect_fluents_are_equal():
+            for fluent in set(self.transition_graph.fluents) - set(effect_fluents):
+                if from_state.fluents[fluent] != to_state.fluents[fluent]:
+                    return False
+            return True
+
+        if postcondition_met and non_effect_fluents_are_equal():
+            return True
+        return False
 
     def parse_releases(self, statement: str) -> None:
         action, effect = statement.split(" releases ")
