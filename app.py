@@ -5,19 +5,19 @@ from source.parsers.statement_parser import StatementParser
 
 st.title("Action Domain Transition Graph")
 
-if "graph" not in st.session_state:
-    st.session_state.graph = TransitionGraph()
+if "statement_parser" not in st.session_state:
+    st.session_state.statement_parser = StatementParser(TransitionGraph())
 
 new_statements = st.text_area("Enter statements (one per line):", height=200)
 if st.button("Add Statements"):
     statements = new_statements.split("\n")
     for statement in statements:
         if statement.strip():
-            st.session_state.graph.parse_statement(statement.strip())
-    fig = st.session_state.graph.generate_graph()
+            st.session_state.statement_parser.parse_statement(statement.strip())
+    fig = st.session_state.statement_parser.transition_graph.generate_graph()
     st.pyplot(fig)
 
-query_parser = QueryParser(st.session_state.graph)
+query_parser = QueryParser(st.session_state.statement_parser.transition_graph)
 
 # Queries
 st.subheader("Queries")

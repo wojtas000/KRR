@@ -1,6 +1,8 @@
 import re
 from typing import Tuple, List
 from source.graph.transition_graph import TransitionGraph, StateNode, Edge
+
+
 class StatementParser:
 
     def __init__(self, transition_graph: TransitionGraph):
@@ -77,18 +79,12 @@ class StatementParser:
         
         precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
         precondition_fluents = self.extract_fluents(precondition_formula)
+        
+        statement = f"{action} causes {effect_fluents[0]} if {precondition_formula}"
+        statement2 = f"{action} causes ~{effect_fluents[0]} if {precondition_formula}"
 
-        for fluent in effect_fluents + precondition_fluents:
-            self.transition_graph.add_fluent(fluent)
-
-        all_states = self.transition_graph.generate_all_states()
-        for from_state in all_states:
-            if self.evaluate_formula(precondition_formula, from_state):
-                self.transition_graph.add_state(state)
-                to_state = StateNode(state.fluents.copy())
-                for fluent in effect_fluents:
-                    to_state.fluents[fluent] = not from_state.fluents[fluent]
-                self.transition_graph.add_edge(from_state, action, to_state)
+        self.parse_causes(statement)
+        self.parse_causes(statement2)
 
     def parse_duration(self, statement: str) -> None:
         action, duration = statement.split(" lasts ")

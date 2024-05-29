@@ -112,7 +112,7 @@ class TransitionGraph:
         fig, ax = plt.subplots(figsize=(12, 12)) 
 
         node_sizes = [1000 + 200 * len(str(node)) for node in G.nodes]  
-        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, ax=ax, node_color='lightblue', linewidths=1, edgecolors='black', alpha=0.8)
+        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, ax=ax, node_color='lightblue', linewidths=1, edgecolors='black', alpha=0.3)
 
         labels = {node: node.label for node in G.nodes()}
         nx.draw_networkx_labels(
@@ -147,10 +147,10 @@ class TransitionGraph:
             pos, 
             edge_labels=nx.get_edge_attributes(G, 'label'), 
             ax=ax, 
-            font_size=10, 
+            font_size=8, 
             font_weight='bold', 
             font_color='black', 
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.2'),
+            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.1'),
             alpha=0.8
         )
 

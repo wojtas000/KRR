@@ -1,4 +1,4 @@
-from transition_graph import TransitionGraph, StateNode, Edge
+from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 from typing import List, Tuple
 
 
