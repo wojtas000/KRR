@@ -1,7 +1,8 @@
 import re
 from typing import Tuple, List
 from source.graph.transition_graph import TransitionGraph, StateNode, Edge
-from source.parsers.custom_parser import InitiallyParser, CausesParser, ReleasesParser, DurationParser
+from source.parsers.custom_parsers import InitiallyParser, CausesParser, ReleasesParser, DurationParser
+
 
 class StatementParser:
 
