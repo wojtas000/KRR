@@ -3,6 +3,7 @@ from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 from source.parsers.logical_formula_parser import LogicalFormulaParser
 from typing import List, Dict
 
+
 class CustomParser(ABC):
     def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
@@ -36,6 +37,7 @@ class CustomParser(ABC):
 
     def precondition_met(self, state: StateNode, precondition: str) -> bool:
         return self.evaluate_formula(precondition, state) or not precondition
+
 
 class InitiallyParser(CustomParser):
 
@@ -80,6 +82,7 @@ class CausesParser(CustomParser):
                     self.transition_graph.add_state(from_state)
                     self.transition_graph.add_state(to_state)
                     self.transition_graph.add_edge(from_state, action, to_state)
+
 
 class ReleasesParser(CausesParser):
 
