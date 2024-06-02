@@ -29,8 +29,7 @@ class StatementParser:
         if "initially" in statement:
             self.statements.insert(0, statement)
         elif "causes" in statement or "releases" in statement:
-            insert_index = next((i for i, s in enumerate(self.statements) if s.startswith("lasts")), len(self.statements))
-            self.statements.insert(insert_index, statement)
+            self.statements.insert(1, statement)
         elif "lasts" in statement:
             self.statements.append(statement)
 
@@ -45,8 +44,12 @@ class StatementParser:
             else:
                 raise ValueError(f"Unsupported statement: {statement}")
 
+    def clear_transition_graph(self) -> None:
+        self.transition_graph = TransitionGraph()
+
     def parse(self, statement: str) -> None:
         self.add_statement(statement)
+        self.clear_transition_graph()
         self.extract_all_fluents()
         for statement in self.statements:
             self.parse_statement(statement)

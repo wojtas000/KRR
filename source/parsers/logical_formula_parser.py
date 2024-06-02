@@ -51,6 +51,7 @@ class LogicalFormulaParser:
         return fluents
 
     def extract_fluent_dict(self, formula: str) -> dict:
+        formula = formula.replace("not ", "~")
         fluents = map(str.strip, formula.split("and"))
         fluent_dict = {}
         for fluent in fluents:

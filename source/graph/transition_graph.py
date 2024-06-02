@@ -104,10 +104,20 @@ class TransitionGraph:
         G = nx.DiGraph()
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
-        
-        for state in self.generate_all_states():
-            G.add_node(state, label=state.label)
-        pos = nx.spring_layout(G, k=1.5, iterations=50)
+        states = self.generate_all_states()
+        for state in states:
+            G.add_node(state)
+
+        rows = max(1, int(len(states) ** 0.5))
+        cols = (len(states) + rows - 1) // rows
+
+        pos = {}
+        node_index = 0
+        for i in range(rows):
+            for j in range(cols):
+                if node_index < len(states):
+                    pos[states[node_index]] = (j, -i)
+                    node_index += 1
 
         fig, ax = plt.subplots(figsize=(12, 12)) 
 
@@ -149,9 +159,7 @@ class TransitionGraph:
             ax=ax, 
             font_size=8, 
             font_weight='bold', 
-            font_color='black', 
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.1'),
-            alpha=0.8
+            font_color='black'
         )
 
 

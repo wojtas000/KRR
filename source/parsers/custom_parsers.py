@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 from source.parsers.logical_formula_parser import LogicalFormulaParser
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 
 class CustomParser(ABC):
@@ -36,8 +36,10 @@ class CustomParser(ABC):
                 return True
         return False
 
-    def precondition_met(self, state: StateNode, precondition: str) -> bool:
-        return self.evaluate_formula(precondition, state) or not precondition
+    def precondition_met(self, state: StateNode, precondition: Union[str, bool]) -> bool:
+        if precondition is True:
+            return True
+        return self.evaluate_formula(precondition, state)
 
 
 class InitiallyParser(CustomParser):
@@ -61,7 +63,7 @@ class CausesParser(CustomParser):
     def get_action_effect_and_precondition(self, statement: str) -> Tuple[str, str]:
         action, effect = map(str.strip, statement.split("causes"))
         effect_formula = effect.split(" if ")[0].strip()
-        precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
+        precondition_formula = effect.split(" if ")[1] if " if " in effect else True
         return action, effect_formula, precondition_formula
 
     def extract_fluents(self, statement: str) -> List[str]:
@@ -80,8 +82,8 @@ class CausesParser(CustomParser):
             if self.precondition_met(from_state, precondition_formula):
                 for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
                     to_state = StateNode(fluents=from_state.fluents.copy())
-                    for fluent, value in self.logical_formula_parser.extract_fluent_dict(statement).items():
-                        to_state.fluents[fluent] = value
+                    to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
+                    print(to_state)
                     self.transition_graph.add_state(from_state)
                     self.transition_graph.add_state(to_state)
                     self.transition_graph.add_edge(from_state, action, to_state)
@@ -109,8 +111,9 @@ class DurationParser(CustomParser):
         return []
 
     def parse(self, statement: str) -> None:
-        action, duration = statement.split(" lasts ")
+        action, duration = map(str.strip, statement.split("lasts"))
         for i, edge in enumerate(self.transition_graph.edges):
+            print(edge)
             if edge.action == action.strip() and edge.source != edge.target:
                 edge.add_duration(int(duration))
                 self.transition_graph.edges[i] = edge
