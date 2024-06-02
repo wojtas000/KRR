@@ -50,6 +50,8 @@ class TransitionGraph:
         self.states: List[StateNode] = []
         self.edges: List[Edge] = []
         self.possible_initial_states = []
+        self.always = []
+        self.impossible = []
 
     def add_fluent(self, fluent: str) -> None:
         if fluent not in self.fluents:
@@ -65,6 +67,7 @@ class TransitionGraph:
     def add_action(self, action: str) -> None:
         if action not in self.actions:
             self.actions.append(action)
+
 
     def generate_all_states(self) -> None:
         return [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]

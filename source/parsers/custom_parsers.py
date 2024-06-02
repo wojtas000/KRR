@@ -41,6 +41,14 @@ class CustomParser(ABC):
             return True
         return self.evaluate_formula(precondition, state)
 
+    def possible(self, state: StateNode) -> bool:
+
+        if self.transition_graph.always and all(not self.evaluate_formula(always_statement, state) for always_statement in self.transition_graph.always):
+            return False
+        if self.transition_graph.impossible and any(self.evaluate_formula(impossible_statement, state) for impossible_statement in self.transition_graph.impossible):
+            return False
+        return True
+
 
 class InitiallyParser(CustomParser):
 
@@ -54,7 +62,7 @@ class InitiallyParser(CustomParser):
     def parse(self, statement: str) -> None:
         initial_logic = self.get_initial_logic(statement)
         for state in self.transition_graph.generate_all_states():
-            if self.evaluate_formula(initial_logic, state):
+            if self.evaluate_formula(initial_logic, state) and self.possible(state):
                 self.transition_graph.add_possible_initial_state(state)
 
 
@@ -79,13 +87,14 @@ class CausesParser(CustomParser):
         all_states = self.transition_graph.generate_all_states()
         
         for from_state in all_states:
-            if self.precondition_met(from_state, precondition_formula):
+            if self.precondition_met(from_state, precondition_formula) and self.possible(from_state):
                 for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
                     to_state = StateNode(fluents=from_state.fluents.copy())
                     to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
-                    self.transition_graph.add_state(from_state)
-                    self.transition_graph.add_state(to_state)
-                    self.transition_graph.add_edge(from_state, action, to_state)
+                    if self.possible(to_state):
+                        self.transition_graph.add_state(from_state)
+                        self.transition_graph.add_state(to_state)
+                        self.transition_graph.add_edge(from_state, action, to_state)
 
 
 class ReleasesParser(CausesParser):
@@ -115,3 +124,23 @@ class DurationParser(CustomParser):
             if edge.action == action.strip() and edge.source != edge.target:
                 edge.add_duration(int(duration))
                 self.transition_graph.edges[i] = edge
+
+
+class AlwaysParser(CustomParser):
+    def extract_fluents(self, statement: str) -> List[str]:
+        always_logic = statement.split("always")[1].strip()
+        return self.logical_formula_parser.extract_fluents(always_logic)
+
+    def parse(self, statement: str) -> None:
+        always_logic = statement.split("always")[1].strip()
+        self.transition_graph.always += self.logical_formula_parser.extract_logical_statements(always_logic)
+
+class ImpossibleParser(CustomParser):
+    def extract_fluents(self, statement: str) -> List[str]:
+        impossible_logic = statement.split("impossible")[1].strip()
+        return self.logical_formula_parser.extract_fluents(impossible_logic)
+
+    def parse(self, statement: str) -> None:
+        impossible_logic = statement.split("impossible")[1].strip()
+        self.transition_graph.impossible += self.logical_formula_parser.extract_logical_statements(impossible_logic)
+

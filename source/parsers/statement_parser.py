@@ -26,6 +26,8 @@ class StatementParser:
             raise ValueError(f"Unsupported statement: {statement}")
 
     def add_statement(self, statement: str) -> None:
+        if "always" or "impossible" in statement:
+            self.statements.insert(0, statement)
         if "initially" in statement:
             self.statements.insert(0, statement)
         elif "causes" in statement or "releases" in statement:
