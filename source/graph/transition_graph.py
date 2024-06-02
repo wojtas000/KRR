@@ -35,6 +35,9 @@ class Edge:
     def __str__(self) -> str:
         return f"{self.source} --{self.action}--> {self.target} ({self.duration})"
 
+    def __eq__(self, other: 'Edge') -> bool:
+        return self.source == other.source and self.action == other.action and self.target == other.target
+
     def add_duration(self, duration: int) -> None:
         self.duration = duration
         self.label = f"{self.action}\nDuration: {duration}"
@@ -101,7 +104,7 @@ class TransitionGraph:
                     
 
     def generate_graph(self, layout_func=nx.kamada_kawai_layout) -> plt.Figure:
-        G = nx.DiGraph()
+        G = nx.MultiDiGraph()
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
         states = self.generate_all_states()
@@ -138,28 +141,30 @@ class TransitionGraph:
         )
 
 
-        for edge in G.edges():
+        for edge in G.edges(data=True):
+            u, v, label = edge
             nx.draw_networkx_edges(
                 G,
                 pos,
-                edgelist=[edge],
+                edgelist=[(u, v)],
                 ax=ax,
-                arrowstyle='-|>',
-                arrowsize=20,
+                arrowstyle='->',
+                arrowsize=30,
                 edge_color='black',
-                connectionstyle='arc3,rad=0.2',
                 width=2,
+                connectionstyle='arc3,rad=0.1'  # Adjust 'rad' for curvature
             )
         ax.set_zorder(2)
         
         nx.draw_networkx_edge_labels(
-            G, 
-            pos, 
-            edge_labels=nx.get_edge_attributes(G, 'label'), 
-            ax=ax, 
-            font_size=8, 
-            font_weight='bold', 
-            font_color='black'
+            G,
+            pos,
+            edge_labels=nx.get_edge_attributes(G, 'label'),
+            ax=ax,
+            font_size=8,
+            font_weight='bold',
+            font_color='black',
+            label_pos=0.5
         )
 
 
