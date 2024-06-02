@@ -13,8 +13,11 @@ if st.button("Add Statements"):
     statements = new_statements.split("\n")
     for statement in statements:
         if statement.strip():
-            st.session_state.statement_parser.parse_statement(statement.strip())
+            st.session_state.statement_parser.parse(statement.strip())
     fig = st.session_state.statement_parser.transition_graph.generate_graph()
+    st.write("Fluents:", st.session_state.statement_parser.transition_graph.fluents)
+    st.write("Statements:", list(set(st.session_state.statement_parser.statements)))
+    st.write("Graph:")
     st.pyplot(fig)
 
 query_parser = QueryParser(st.session_state.statement_parser.transition_graph)
