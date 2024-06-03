@@ -23,9 +23,16 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Example 
+## Insert statements 
 
-### Insert statements
+### Allowed statements
+
+1. initially (formula)
+2. (action) causes (effect formula) if (precondition formula)
+3.(action) releases (fluent) if (precondition formula)
+4. (action) lasts (time)
+
+### Example
 The insertion can be done either one by one or all together, with each statement in separate line:
 
 1. ```initially ~car_washed and ~lawn_mowed and ~gift_bought```
@@ -36,7 +43,9 @@ The insertion can be done either one by one or all together, with each statement
 6. ```MOW_LAWN lasts 45```
 7. ```BUY_GIFT lasts 90```
 
-### Query the system:
+## Query language
+
+### Examples
 
 #### Executability query
 
