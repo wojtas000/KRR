@@ -2,11 +2,23 @@
 Knowledge representation and reasoning
 
 ## Run
+
+Clone repository:
+
 ```bash
 git clone https://github.com/wojtas000/KRR.git
 cd KRR
+```
+
+If you want to create separate virtual environment:
+```bash
 python3 -m venv venv
 source venv/bin/activate
+```
+
+Install dependencies and run the application:
+
+```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
