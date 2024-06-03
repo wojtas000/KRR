@@ -32,7 +32,16 @@ streamlit run app.py
 3.(action) releases (fluent) if (precondition formula)
 4. (action) lasts (time)
 
+### Allowed logical operators:
+
+1. and, &
+2. or, |
+3. implies, =>
+4. iff, <=>
+5. brackets () to separate subformulas
+
 ### Example
+
 The insertion can be done either one by one or all together, with each statement in separate line:
 
 1. ```initially ~car_washed and ~lawn_mowed and ~gift_bought```
