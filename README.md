@@ -17,9 +17,12 @@ streamlit run app.py
 The insertion can be done either one by one or all together, with each statement in separate line:
 
 1. ```initially ~car_washed and ~lawn_mowed and ~gift_bought```
-2. ```WASH_CAR causes car_washed with time 30 minutes if ~car_washed```
-3. ```MOW_LAWN causes lawn_mowed with time 75 minutes if ~lawn_mowed```
-4. ```BUY_GIFT causes gift_bought with time 90 minutes if ~gift_bought```
+2. ```WASH_CAR causes car_washed if ~car_washed```
+3. ```MOW_LAWN causes lawn_mowed if ~lawn_mowed```
+4. ```BUY_GIFT causes gift_bought if ~gift_bought```
+5. ```WASH_CAR lasts 30```
+6. ```MOW_LAWN lasts 45```
+7. ```BUY_GIFT lasts 90```
 
 ### Query the system:
 
