@@ -10,7 +10,7 @@ git clone https://github.com/wojtas000/KRR.git
 cd KRR
 ```
 
-If you want to create separate virtual environment:
+If you want to create separate virtual environment (Linux):
 ```bash
 python3 -m venv venv
 source venv/bin/activate
