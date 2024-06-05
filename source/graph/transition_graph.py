@@ -117,11 +117,13 @@ class TransitionGraph:
            
                     
 
-    def generate_graph(self, layout_func=nx.kamada_kawai_layout) -> plt.Figure:
+    def generate_graph(self) -> plt.Figure:
         G = nx.MultiDiGraph()
+        
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
         states = self.generate_all_states()
+        
         for state in states:
             G.add_node(state)
 
