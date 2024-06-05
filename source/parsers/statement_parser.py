@@ -1,19 +1,38 @@
 import re
 from typing import Tuple, List
 from source.graph.transition_graph import TransitionGraph, StateNode, Edge
-from source.parsers.custom_parsers import InitiallyParser, CausesParser, ReleasesParser, DurationParser
+from source.parsers.custom_parsers import (
+    InitiallyParser, 
+    CausesParser, 
+    ReleasesParser, 
+    DurationParser,
+    AfterParser,
+    AlwaysParser,
+    ImpossibleParser
+)
 
 
 class StatementParser:
 
     def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
-        self.statements = []
+        self.statements = {
+            "initially": [],
+            "causes": [],
+            "releases": [],
+            "lasts": [],
+            "after": [],
+            "always": [],
+            "impossible": []
+        }
         self.parser_classes = {
             "initially": InitiallyParser,
             "causes": CausesParser,
             "releases": ReleasesParser,
-            "lasts": DurationParser
+            "lasts": DurationParser,
+            "after": AfterParser,
+            "always": AlwaysParser,
+            "impossible": ImpossibleParser
         }
 
     def parse_statement(self, statement: str) -> None:
@@ -26,17 +45,14 @@ class StatementParser:
             raise ValueError(f"Unsupported statement: {statement}")
 
     def add_statement(self, statement: str) -> None:
-        if "always" or "impossible" in statement:
-            self.statements.insert(0, statement)
-        if "initially" in statement:
-            self.statements.insert(0, statement)
-        elif "causes" in statement or "releases" in statement:
-            self.statements.insert(1, statement)
-        elif "lasts" in statement:
-            self.statements.append(statement)
+        keyword = next((k for k in self.statements if k in statement), None)
+        if keyword:
+            self.statements[keyword] = self.statements[keyword] + [statement]
+        else:
+            raise ValueError(f"Unsupported statement: {statement}") 
 
     def extract_all_fluents(self) -> List[str]:
-        for statement in self.statements:
+        for statement in self.prepare_statements():
             keyword = next((k for k in self.parser_classes if k in statement), None)
             if keyword:
                 parser = self.parser_classes[keyword](self.transition_graph)
@@ -49,9 +65,14 @@ class StatementParser:
     def clear_transition_graph(self) -> None:
         self.transition_graph = TransitionGraph()
 
+    def prepare_statements(self) -> List[str]:
+        return  self.statements["always"] + self.statements["impossible"] + \
+                self.statements["initially"] + self.statements["causes"] + self.statements["releases"] + \
+                self.statements["after"] + self.statements["lasts"]
+
     def parse(self, statement: str) -> None:
         self.add_statement(statement)
         self.clear_transition_graph()
         self.extract_all_fluents()
-        for statement in self.statements:
+        for statement in self.prepare_statements():
             self.parse_statement(statement)

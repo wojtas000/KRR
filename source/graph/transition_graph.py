@@ -50,6 +50,7 @@ class TransitionGraph:
         self.states: List[StateNode] = []
         self.edges: List[Edge] = []
         self.possible_initial_states = []
+        self.possible_ending_states = []
         self.always = []
         self.impossible = []
 
@@ -59,6 +60,9 @@ class TransitionGraph:
 
     def add_possible_initial_state(self, state: StateNode) -> None:
         self.possible_initial_states.append(state)
+
+    def add_possible_ending_state(self, state: StateNode) -> None:
+        self.possible_ending_states.append(state)
 
     def add_state(self, state: StateNode) -> None:
         if state not in self.states:

@@ -151,9 +151,31 @@ class DurationParser(CustomParser):
     def parse(self, statement: str) -> None:
         action, duration = map(str.strip, statement.split("lasts"))
         for i, edge in enumerate(self.transition_graph.edges):
-            if edge.action == action.strip() and edge.source != edge.target:
+            if edge.action == action and edge.source != edge.target:
                 edge.add_duration(int(duration))
                 self.transition_graph.edges[i] = edge
+
+
+class AfterParser(CausesParser):
+    def extract_fluents(self, statement: str) -> List[str]:
+        return super().extract_fluents(self.prepare_statement(statement))
+    
+    def parse(self, statement: str) -> None:
+        effect_formula, action = map(str.strip, statement.split("after"))
+        for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
+            for edge in self.transition_graph.edges:
+                if edge.action == action:
+                    fluent_dict = self.logical_formula_parser.extract_fluent_dict(statement)
+                    if all(fluent in edge.target.fluents for fluent in fluent_dict):
+                        self.transition_graph.add_possible_ending_state(edge.target)
+
+
+
+    def prepare_statement(self, statement:str) -> None:
+        effect_formula, action = map(str.strip, statement.split("after"))
+        effect_fluents = self.logical_formula_parser.extract_fluents(effect_formula)
+        statement = f"{action} causes {effect_formula}"
+        return statement
 
 
 class AlwaysParser(CustomParser):
@@ -164,6 +186,7 @@ class AlwaysParser(CustomParser):
     def parse(self, statement: str) -> None:
         always_logic = statement.split("always")[1].strip()
         self.transition_graph.always += self.logical_formula_parser.extract_logical_statements(always_logic)
+
 
 class ImpossibleParser(CustomParser):
     def extract_fluents(self, statement: str) -> List[str]:
