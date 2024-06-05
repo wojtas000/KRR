@@ -139,7 +139,18 @@ class TransitionGraph:
         fig, ax = plt.subplots(figsize=(12, 12)) 
 
         node_sizes = [1000 + 200 * len(str(node)) for node in G.nodes]  
-        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, ax=ax, node_color='lightblue', linewidths=1, edgecolors='black', alpha=0.3)
+        node_colors = []
+        for node in G.nodes:
+            if node in self.possible_initial_states:
+                node_colors.append('green')
+            elif node in self.possible_ending_states:
+                node_colors.append('red')
+            else:
+                node_colors.append('lightblue')
+
+        node_sizes = [1000 + 200 * len(str(node)) for node in G.nodes]
+        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, ax=ax, node_color=node_colors, linewidths=1, edgecolors='black', alpha=0.3)
+
 
         labels = {node: node.label for node in G.nodes()}
         nx.draw_networkx_labels(
