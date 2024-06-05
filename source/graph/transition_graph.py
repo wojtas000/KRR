@@ -122,8 +122,8 @@ class TransitionGraph:
         
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
-        states = self.generate_all_states()
         
+        states = self.generate_all_states()
         for state in states:
             G.add_node(state)
 
@@ -140,7 +140,6 @@ class TransitionGraph:
 
         fig, ax = plt.subplots(figsize=(12, 12)) 
 
-        node_sizes = [1000 + 200 * len(str(node)) for node in G.nodes]  
         node_colors = []
         for node in G.nodes:
             if node in self.possible_initial_states:
