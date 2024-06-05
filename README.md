@@ -27,10 +27,13 @@ streamlit run app.py
 
 ### Allowed statements
 
-1. initially (formula)
-2. (action) causes (effect formula) if (precondition formula)
-3.(action) releases (fluent) if (precondition formula)
-4. (action) lasts (time)
+1. **initially** (formula)
+2. (action) **causes** (effect formula) **if** (precondition formula)
+3. (action) **releases** (fluent) **if** (precondition formula)
+4. (action) **lasts** (time)
+5. (effect formula) **after** (action)
+6. **always** (formula)
+7. **impossible** (formula)
 
 ### Allowed logical operators:
 
