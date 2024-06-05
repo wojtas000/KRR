@@ -79,22 +79,52 @@ class CausesParser(CustomParser):
 
         effect_fluents = self.logical_formula_parser.extract_fluents(effect_formula)
         precondition_fluents = self.logical_formula_parser.extract_fluents(precondition_formula)
-        
+    
         return effect_fluents + precondition_fluents
 
     def parse(self, statement: str) -> None:
         action, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
         all_states = self.transition_graph.generate_all_states()
+
+        visited_states = self.update_existing_edges(action, effect_formula, precondition_formula, all_states)
+        self.add_new_edges(action, effect_formula, precondition_formula, visited_states, all_states)
+
+    def update_existing_edges(self, action, effect_formula, precondition_formula, all_states):
+        visited_states = []
+        edges_to_remove = []
+        edges_to_add = []
         
+        for edge in self.transition_graph.edges:
+            if edge.action == action:
+                from_state = edge.source
+                if self.precondition_met(from_state, precondition_formula) and self.possible(from_state):
+                    for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
+                        to_state = StateNode(fluents=edge.target.fluents.copy())
+                        to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
+                        if self.possible(to_state):
+                            new_edge = Edge(from_state, action, to_state, edge.duration)
+                            edges_to_add.append(new_edge)
+                            edges_to_remove.append(edge)
+                            visited_states.append(to_state)
+
+        for edge in edges_to_remove:
+            self.transition_graph.remove_edge(edge.action, edge.source, edge.target)
+
+        for edge in edges_to_add:
+            self.transition_graph.add_edge(edge.source, edge.action, edge.target, edge.duration)
+
+        return visited_states
+
+    def add_new_edges(self, action, effect_formula, precondition_formula, visited_states, all_states):
         for from_state in all_states:
             if self.precondition_met(from_state, precondition_formula) and self.possible(from_state):
-                for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
-                    to_state = StateNode(fluents=from_state.fluents.copy())
-                    to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
-                    if self.possible(to_state):
-                        self.transition_graph.add_state(from_state)
-                        self.transition_graph.add_state(to_state)
-                        self.transition_graph.add_edge(from_state, action, to_state)
+                    for statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
+                        to_state = StateNode(fluents=from_state.fluents.copy())
+                        to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
+                        if self.possible(to_state) and to_state not in visited_states:
+                            self.transition_graph.add_state(from_state)
+                            self.transition_graph.add_state(to_state)
+                            self.transition_graph.add_edge(from_state, action, to_state)
 
 
 class ReleasesParser(CausesParser):

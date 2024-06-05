@@ -68,6 +68,13 @@ class TransitionGraph:
         if action not in self.actions:
             self.actions.append(action)
 
+    def remove_edge(self, action: str, from_state: StateNode, to_state: StateNode) -> None:
+        edges_copy = []
+        for i, edge in enumerate(self.edges):
+            if edge.action == action and edge.source == from_state and edge.target == to_state:
+                continue
+            edges_copy.append(edge)
+        self.edges = edges_copy
 
     def generate_all_states(self) -> None:
         return [StateNode(dict(zip(self.fluents, values))) for values in product([True, False], repeat=len(self.fluents))]
