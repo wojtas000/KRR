@@ -18,17 +18,20 @@ class QueryParser:
             raise ValueError("Invalid query format.")
 
     def parse_value_query(self, query: str) -> bool:
-        necessity, formula, _, actions, _, condition = query.split("  ")
+        necessity, formula = map(str.strip, query.split("after")[0].split(" "))
+        actions, condition = map(str.strip, query.split("after")[1].split("from"))
         return self.check_query(necessity, actions.split(","), condition, formula)
 
     def parse_executability_query(self, query: str) -> bool:
-        necessity, _, actions, _, condition = query.split("  ")
+        necessity, formula = map(str.strip, query.split("executable"))
+        actions, condition = map(str.strip, formula.split("from"))
         return self.check_query(necessity, actions.split(","), condition)
 
     def parse_executability_time_query(self, query: str) -> bool:
-        necessity, _, actions, _, time_str, _, condition = query.split("  ")
-        time_limit = int(time_str.split(" ")[0])
-        return self.check_query(necessity, actions.split(","), condition, time_limit=time_limit)
+        necessity, formula = map(str.strip, query.split("executable"))
+        actions = formula.split("with time")[0].strip()
+        time_limit, condition = map(str.strip, formula.split("with time")[1].split("from"))
+        return self.check_query(necessity, map(str.strip, actions.split(",")), condition, time_limit=int(time_limit))
 
     def check_query(self, necessity: str, actions: List[str], condition: str, formula: str = None, time_limit: int = None) -> bool:
         for state in self.graph.states:
