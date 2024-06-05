@@ -62,7 +62,7 @@ The insertion can be done either one by one or all together, with each statement
 
 #### Executability query with time
 
-``` necessary executable WASH_CAR,MOW_LAWN with time 120 minutes from ~car_washed and ~lawn_mowed and ~gift_bought ```  
+``` necessary executable WASH_CAR,MOW_LAWN with time 120 from ~car_washed and ~lawn_mowed and ~gift_bought ```  
 
 #### Value query
 
