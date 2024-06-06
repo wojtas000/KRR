@@ -18,7 +18,7 @@ class QueryParser:
             raise ValueError("Invalid query format.")
 
     def parse_value_query(self, query: str) -> bool:
-        necessity, formula = map(str.strip, query.split("after")[0].split(" "))
+        necessity, formula = map(str.strip, [q for q in query.split("after")[0].split(" ") if q != ""])
         actions, condition = map(str.strip, query.split("after")[1].split("from"))
         return self.check_query(necessity, actions.split(","), condition, formula)
 
