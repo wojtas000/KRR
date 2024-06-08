@@ -2,6 +2,7 @@ import streamlit as st
 from source.graph.transition_graph import TransitionGraph
 from source.parsers.query_parser import QueryParser
 from source.parsers.statement_parser import StatementParser
+from source.parsers.query_parser2 import *
 
 def load_examples(file_path):
     examples = {}
@@ -54,15 +55,46 @@ if st.button("Add Statements"):
     st.write("Graph:")
     st.pyplot(fig)
 
-query_parser = QueryParser(st.session_state.statement_parser.transition_graph)
 
 # Queries
 st.subheader("Queries")
-query = st.text_input("Enter a query:")
-if st.button("Execute Query"):
-    try:
-        result = query_parser.parse_query(query)
-        st.write("Query:", query)
-        st.write("Answer:", "Yes" if result else "No")
-    except ValueError as e:
-        st.write("Invalid query format.")
+st.write('Enter query:')
+st.write('Alpha: desired state')
+alpha = st.text_input('Alpha:')
+st.write('Actions: list of actions to be performed')
+actions = st.text_input('Actions:').split(',')
+st.write('Pi: initial state')
+pi = st.text_input('Pi:')
+st.write('Max cost: maximum cost of actions')
+max_cost = st.text_input('Max cost:')
+max_cost = int(max_cost) if max_cost != '' else None
+G = st.session_state.statement_parser.transition_graph
+args2func = {
+    'necessary_alpha_after': [necessary_alpha_after, (G, alpha, actions, pi, fluents2order)],
+    'possibly_alpha_after': [possibly_alpha_after, (G, alpha, actions, pi, fluents2order)],
+    'necessary_executable': [necessary_executable, (G, actions, pi, fluents2order)],
+    'possibly_executable': [possibly_executable, (G, actions, pi, fluents2order)],
+    'necessary_executable_with_cost': [necessary_executable_with_cost, (G, actions, pi, max_cost, fluents2order)],
+    'possibly_executable_with_cost': [possibly_executable_with_cost, (G, actions, pi, max_cost, fluents2order)]
+}
+
+argnames2func = {
+    'necessary_alpha_after': ['alpha', 'actions', 'pi'],
+    'possibly_alpha_after': ['alpha', 'actions', 'pi'],
+    'necessary_executable': ['actions', 'pi'],
+    'possibly_executable': ['actions', 'pi'],
+    'necessary_executable_with_cost': ['actions', 'pi', 'max_cost'],
+    'possibly_executable_with_cost': ['actions', 'pi', 'max_cost']
+}
+
+query = st.selectbox('Choose query:', list(args2func.keys()))
+
+# check if all arguments are filled
+args_ = args2func[query][1]
+st.write('Arguments:', *argnames2func[query])
+all_filled = all([True if arg != '' else False for arg in args_[1:]])
+if all_filled:
+    result = args2func[query][0](*args_)
+    st.write('Result:', result)
+else:
+    st.write('Fill all arguments to get result')
