@@ -79,9 +79,10 @@ class TransitionGraph:
         self.always = []
         self.impossible = []
 
-    def add_fluent(self, fluent: str) -> None:
-        if fluent not in self.fluents:
-            self.fluents.append(fluent)
+    def add_fluents(self, fluents: str) -> None:
+        for fluent in fluents:
+            if fluent not in self.fluents:
+                self.fluents.append(fluent)
 
     def add_possible_initial_state(self, state: StateNode) -> None:
         self.possible_initial_states.append(state)
@@ -93,9 +94,10 @@ class TransitionGraph:
         if state not in self.states:
             self.states.append(state)
 
-    def add_action(self, action: str) -> None:
-        if action not in self.actions:
-            self.actions.append(action)
+    def add_actions(self, actions: str) -> None:
+        for action in actions:
+            if action not in self.actions:
+                self.actions.append(action)
 
     def remove_edge(
         self, action: str, from_state: StateNode, to_state: StateNode
@@ -164,7 +166,7 @@ class TransitionGraph:
             combinations.append(StateNode(new_state_fluents))
         return combinations
 
-    def generate_graph(self) -> plt.Figure:
+    def generate_graph(self) -> nx.MultiDiGraph:
         G = nx.MultiDiGraph()
 
         for edge in self.edges:
@@ -173,6 +175,11 @@ class TransitionGraph:
         states = self.generate_all_states()
         for state in states:
             G.add_node(state)
+
+        return G
+
+    def draw_graph(self) -> plt.Figure:
+        G = self.generate_graph()
 
         pos = nx.spring_layout(G, k=10 / sqrt(G.order()))
         fig, ax = plt.subplots(figsize=(20, 20))

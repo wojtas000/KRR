@@ -11,12 +11,11 @@ if "statement_parser" not in st.session_state:
 new_statements = st.text_area("Enter statements (one per line):", height=200)
 if st.button("Add Statements"):
     statements = new_statements.split("\n")
-    for statement in statements:
-        if statement.strip():
-            st.session_state.statement_parser.parse(statement.strip())
+    statements = [s.strip() for s in statements if s]
+    st.session_state.statement_parser.parse(statements)
     fig = st.session_state.statement_parser.transition_graph.generate_graph()
-    st.write("Fluents:", st.session_state.statement_parser.transition_graph.fluents)
-    st.write("Statements:", list(set(st.session_state.statement_parser.statements)))
+    st.write("Fluents:", ", ".join(st.session_state.statement_parser.transition_graph.fluents))
+    st.write("Actions:", ", ".join(st.session_state.statement_parser.transition_graph.actions))
     st.write("Graph:")
     st.pyplot(fig)
 

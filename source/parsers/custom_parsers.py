@@ -13,6 +13,10 @@ class CustomParser(ABC):
         self.statements = []
 
     @abstractmethod
+    def extract_actions(self, statement: str) -> str:
+        pass
+
+    @abstractmethod
     def extract_fluents(self, statement: str) -> List[str]:
         pass
 
@@ -52,15 +56,15 @@ class CustomParser(ABC):
 
 class InitiallyParser(CustomParser):
 
-    def get_initial_logic(self, statement: str) -> str:
-        return statement.split("initially")[1].strip()
+    def extract_actions(self, statement: str) -> str:
+        return []
 
     def extract_fluents(self, statement: str) -> List[str]:
-        formula = self.get_initial_logic(statement)
+        formula = statement.split("initially")[1].strip()
         return self.logical_formula_parser.extract_fluents(formula)
     
     def parse(self, statement: str) -> None:
-        initial_logic = self.get_initial_logic(statement)
+        initial_logic = statement.split("initially")[1].strip()
         for state in self.transition_graph.generate_all_states():
             if self.evaluate_formula(initial_logic, state) and self.possible(state):
                 self.transition_graph.add_possible_initial_state(state)
@@ -70,9 +74,13 @@ class CausesParser(CustomParser):
     
     def get_action_effect_and_precondition(self, statement: str) -> Tuple[str, str]:
         action, effect = map(str.strip, statement.split("causes"))
-        effect_formula = effect.split(" if ")[0].strip()
+        effect_formula = effect.split(" if ")[0].strip() if " if " in effect else effect.strip()
         precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
         return action, effect_formula, precondition_formula
+
+    def extract_actions(self, statement: str) -> str:
+        action, _, _ = self.get_action_effect_and_precondition(statement)
+        return [action]
 
     def extract_fluents(self, statement: str) -> List[str]:
         _, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
@@ -145,6 +153,10 @@ class ReleasesParser(CausesParser):
 
 
 class DurationParser(CustomParser):
+
+    def extract_actions(self, statement: str) -> str:
+        return [statement.split("lasts")[0].strip()]
+
     def extract_fluents(self, statement: str) -> List[str]:
         return []
 
@@ -156,9 +168,14 @@ class DurationParser(CustomParser):
                 self.transition_graph.edges[i] = edge
 
 
-class AfterParser(CausesParser):
+class AfterParser(CustomParser):
+
+    def extract_actions(self, statement: str) -> str:
+        return statement.split("after")[1].strip().split(",")
+
     def extract_fluents(self, statement: str) -> List[str]:
-        return super().extract_fluents(self.prepare_statement(statement))
+        effect_formula, actions = statement.split("after")
+        return self.logical_formula_parser.extract_fluents(effect_formula)
     
     def parse(self, statement: str) -> None:
         effect_formula, action = map(str.strip, statement.split("after"))
@@ -179,6 +196,10 @@ class AfterParser(CausesParser):
 
 
 class AlwaysParser(CustomParser):
+
+    def extract_actions(self, statement: str) -> str:
+        return []
+
     def extract_fluents(self, statement: str) -> List[str]:
         always_logic = statement.split("always")[1].strip()
         return self.logical_formula_parser.extract_fluents(always_logic)
@@ -189,6 +210,10 @@ class AlwaysParser(CustomParser):
 
 
 class ImpossibleParser(CustomParser):
+
+    def extract_actions(self, statement: str) -> str:
+        return []
+
     def extract_fluents(self, statement: str) -> List[str]:
         impossible_logic = statement.split("impossible")[1].strip()
         return self.logical_formula_parser.extract_fluents(impossible_logic)

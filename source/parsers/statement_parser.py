@@ -51,16 +51,27 @@ class StatementParser:
         else:
             raise ValueError(f"Unsupported statement: {statement}") 
 
-    def extract_all_fluents(self) -> List[str]:
+    def extract_all_actions(self) -> List[str]:
+        actions = []
         for statement in self.prepare_statements():
             keyword = next((k for k in self.parser_classes if k in statement), None)
             if keyword:
                 parser = self.parser_classes[keyword](self.transition_graph)
-                fluents = parser.extract_fluents(statement)
-                for fluent in fluents:
-                    self.transition_graph.add_fluent(fluent)
+                actions += parser.extract_actions(statement)
             else:
                 raise ValueError(f"Unsupported statement: {statement}")
+        return actions  
+
+    def extract_all_fluents(self) -> List[str]:
+        fluents = []
+        for statement in self.prepare_statements():
+            keyword = next((k for k in self.parser_classes if k in statement), None)
+            if keyword:
+                parser = self.parser_classes[keyword](self.transition_graph)
+                fluents += parser.extract_fluents(statement)
+            else:
+                raise ValueError(f"Unsupported statement: {statement}")
+        return fluents
 
     def clear_transition_graph(self) -> None:
         self.transition_graph = TransitionGraph()
@@ -70,9 +81,13 @@ class StatementParser:
                 self.statements["initially"] + self.statements["causes"] + self.statements["releases"] + \
                 self.statements["after"] + self.statements["lasts"]
 
-    def parse(self, statement: str) -> None:
-        self.add_statement(statement)
+    def parse(self, statements: str) -> None:
+        for statement in statements:
+            self.add_statement(statement)
+        
         self.clear_transition_graph()
-        self.extract_all_fluents()
+        self.transition_graph.add_fluents(self.extract_all_fluents())
+        self.transition_graph.add_actions(self.extract_all_actions())
+
         for statement in self.prepare_statements():
             self.parse_statement(statement)
