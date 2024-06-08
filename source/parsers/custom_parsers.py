@@ -130,8 +130,6 @@ class CausesParser(CustomParser):
                         to_state = StateNode(fluents=from_state.fluents.copy())
                         to_state.update(self.logical_formula_parser.extract_fluent_dict(statement))
                         if self.possible(to_state) and to_state not in visited_states:
-                            self.transition_graph.add_state(from_state)
-                            self.transition_graph.add_state(to_state)
                             self.transition_graph.add_edge(from_state, action, to_state)
 
 
@@ -141,15 +139,20 @@ class ReleasesParser(CausesParser):
         statement = statement.replace("releases", "causes")
         return super().extract_fluents(statement)
 
-
-    def parse(self, statement: str) -> None:
+    def extract_actions(self, statement: str) -> str:
         statement = statement.replace("releases", "causes")
-        action, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
-        effect_fluents = self.logical_formula_parser.extract_fluents(effect_formula)
-        statement2 = f"{action} causes ~{effect_fluents[0]} if {precondition_formula}"
-        
-        super().parse(statement)
-        super().parse(statement2)
+        return super().extract_actions(statement)
+
+    def parse(self, statement: str):
+        action, modified_fluent, precondition_formula = self.get_action_effect_and_precondition(statement.replace("releases", "causes"))
+        all_states = self.transition_graph.generate_all_states()
+        for from_state in all_states:
+            if self.precondition_met(from_state, precondition_formula) and self.possible(from_state):
+                to_state = StateNode(fluents=from_state.fluents.copy())
+                to_state.update({modified_fluent: not from_state.fluents[modified_fluent]})
+
+                if self.possible(to_state):
+                    self.transition_graph.add_edge(from_state, action, to_state)
 
 
 class DurationParser(CustomParser):
@@ -159,7 +162,7 @@ class DurationParser(CustomParser):
 
     def extract_fluents(self, statement: str) -> List[str]:
         return []
-
+    
     def parse(self, statement: str) -> None:
         action, duration = map(str.strip, statement.split("lasts"))
         for i, edge in enumerate(self.transition_graph.edges):
