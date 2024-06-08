@@ -13,7 +13,7 @@ if st.button("Add Statements"):
     statements = new_statements.split("\n")
     statements = [s.strip() for s in statements if s]
     st.session_state.statement_parser.parse(statements)
-    fig = st.session_state.statement_parser.transition_graph.generate_graph()
+    fig = st.session_state.statement_parser.transition_graph.draw_graph()
     st.write("Fluents:", ", ".join(st.session_state.statement_parser.transition_graph.fluents))
     st.write("Actions:", ", ".join(st.session_state.statement_parser.transition_graph.actions))
     st.write("Graph:")
