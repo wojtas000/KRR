@@ -39,7 +39,7 @@ Spin releases loaded if loaded
 # Opening the door
 initially ~open
 InsertCard causes open
-impossible InsertCard if ¬hasCard
+impossible InsertCard if ~hasCard
 
 # Two Switches
 noninertial light
