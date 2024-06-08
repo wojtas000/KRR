@@ -10,6 +10,7 @@ class CustomParser(ABC):
     def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
         self.logical_formula_parser = LogicalFormulaParser()
+        self.name = self.__class__.__name__.split("Parser")[0].lower()
         self.statements = []
 
     @abstractmethod
@@ -33,8 +34,10 @@ class CustomParser(ABC):
                 formula = formula.replace(f"~{fluent}", str(not value))
                 formula = formula.replace(f"{fluent}",str(value))
             return formula
-
-        for logical_statement in self.logical_formula_parser.extract_logical_statements(formula):
+        logical_statements = self.logical_formula_parser.extract_logical_statements(formula)
+        if logical_statements == None:
+            raise ValueError(f"Contradictory statement for {self.name} statement. In formula: {formula}")
+        for logical_statement in logical_statements:
             formula = replace_fluents_with_values(logical_statement, state)
             if eval(formula):
                 return True
@@ -65,7 +68,7 @@ class InitiallyParser(CustomParser):
     
     def parse(self, statement: str) -> None:
         initial_logic = statement.split("initially")[1].strip()
-        for state in self.transition_graph.generate_all_states():
+        for state in self.transition_graph.generate_possible_states():
             if self.evaluate_formula(initial_logic, state) and self.possible(state):
                 self.transition_graph.add_possible_initial_state(state)
 
@@ -155,7 +158,7 @@ class ReleasesParser(CausesParser):
                     self.transition_graph.add_edge(from_state, action, to_state)
 
 
-class DurationParser(CustomParser):
+class LastsParser(CustomParser):
 
     def extract_actions(self, statement: str) -> str:
         return [statement.split("lasts")[0].strip()]
@@ -207,10 +210,18 @@ class AlwaysParser(CustomParser):
         always_logic = statement.split("always")[1].strip()
         return self.logical_formula_parser.extract_fluents(always_logic)
 
+    def always(self, state: StateNode, always_statements: List = []) -> bool:
+        if always_statements and all(not self.evaluate_formula(always_statement, state) for always_statement in always_statements):
+            return False
+        return True
+
     def parse(self, statement: str) -> None:
         always_logic = statement.split("always")[1].strip()
-        self.transition_graph.always += self.logical_formula_parser.extract_logical_statements(always_logic)
-
+        always_statements = self.logical_formula_parser.extract_logical_statements(always_logic)
+        self.transition_graph.always += always_statements
+        for state in self.transition_graph.generate_all_states():
+            if self.always(state, always_statements):
+                self.transition_graph.always_states.append(state)
 
 class ImpossibleParser(CustomParser):
 
@@ -221,7 +232,16 @@ class ImpossibleParser(CustomParser):
         impossible_logic = statement.split("impossible")[1].strip()
         return self.logical_formula_parser.extract_fluents(impossible_logic)
 
+    def impossible(self, state: StateNode, impossible_statements: List = []) -> bool:
+        if impossible_statements and any(self.evaluate_formula(impossible_statement, state) for impossible_statement in impossible_statements):
+            return True
+        return False
+
     def parse(self, statement: str) -> None:
         impossible_logic = statement.split("impossible")[1].strip()
-        self.transition_graph.impossible += self.logical_formula_parser.extract_logical_statements(impossible_logic)
+        impossible_statements = self.logical_formula_parser.extract_logical_statements(impossible_logic)
+        self.transition_graph.impossible += impossible_statements
+        for state in self.transition_graph.generate_all_states():
+            if self.impossible(state, impossible_statements):
+                self.transition_graph.impossible_states.append(state)
 

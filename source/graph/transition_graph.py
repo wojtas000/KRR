@@ -78,6 +78,8 @@ class TransitionGraph:
         self.possible_ending_states = []
         self.always = []
         self.impossible = []
+        self.always_states = []
+        self.impossible_states = []
 
     def add_fluents(self, fluents: str) -> None:
         for fluent in fluents:
@@ -118,6 +120,19 @@ class TransitionGraph:
             StateNode(dict(zip(self.fluents, values)))
             for values in product([True, False], repeat=len(self.fluents))
         ]
+
+    def generate_possible_states(self) -> None:
+        always_impossible_intersection = set(self.always_states) & set(self.impossible_states)
+        if always_impossible_intersection:
+            raise ValueError(
+                f"Contradiction: state {always_impossible_intersection} is both always and impossible."
+            )
+        if self.always_states:
+            return self.always_states
+        all_states = self.generate_all_states()
+        if self.impossible_states:
+            return list(set(all_states) - set(self.impossible_states))
+        return all_states
 
     def add_edge(
         self,
@@ -172,8 +187,7 @@ class TransitionGraph:
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label)
 
-        states = self.generate_all_states()
-        for state in states:
+        for state in self.generate_possible_states():
             G.add_node(state)
 
         return G

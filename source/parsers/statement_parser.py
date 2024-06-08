@@ -5,7 +5,7 @@ from source.parsers.custom_parsers import (
     InitiallyParser, 
     CausesParser, 
     ReleasesParser, 
-    DurationParser,
+    LastsParser,
     AfterParser,
     AlwaysParser,
     ImpossibleParser
@@ -29,7 +29,7 @@ class StatementParser:
             "initially": InitiallyParser,
             "causes": CausesParser,
             "releases": ReleasesParser,
-            "lasts": DurationParser,
+            "lasts": LastsParser,
             "after": AfterParser,
             "always": AlwaysParser,
             "impossible": ImpossibleParser

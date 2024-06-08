@@ -24,14 +24,17 @@ class LogicalFormulaParser:
 
 
     def extract_and_statements(self, pyeda_formula) -> List[str]:
-        and_statements = []
-
         def extract_and_statement(and_statement: expr) -> str:
             return ' and '.join(str(x) for x in and_statement.xs).replace('~', 'not ')
+        
+        and_statements = []
+
         if isinstance(pyeda_formula, AndOp):
             and_statements.append(extract_and_statement(pyeda_formula))
         elif isinstance(pyeda_formula, Variable) or isinstance(pyeda_formula, Complement):
             and_statements.append(str(pyeda_formula))
+        elif pyeda_formula.__class__.__name__ == "_Zero":
+            return None
         else:
             for and_statement in pyeda_formula.xs:
                 if isinstance(and_statement, AndOp):
