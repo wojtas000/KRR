@@ -1,0 +1,50 @@
+# Contradictory initially statement
+initially f and ~f
+
+# Yale Shooting Problem (YSP)
+initially ~loaded
+initially alive
+Load causes loaded
+Shoot causes ~loaded
+Shoot causes ~alive if loaded
+
+# Stanford Murder Mystery
+initially alive
+Shoot causes ~loaded
+Shoot causes ~alive if loaded
+~alive after Shoot
+
+# Stolen Car Scenario
+initially ~stolen
+stolen after WAIT, WAIT, WAIT
+
+# Opening the door - contradiction
+OpenTheDoor causes open if hasCard
+OpenTheDoor causes ~open if ~hasCode
+
+# Modification of Yale Shooting Problem
+initially loaded & walking
+always walking => alive
+Load causes loaded
+Shoot causes ~loaded
+Shoot causes ~alive if loaded
+
+# Russian Turkey Scenario
+initially ~loaded & alive
+Load causes loaded
+Shoot causes ~loaded
+Shoot causes ~alive if loaded
+Spin releases loaded if loaded
+
+# Opening the door
+initially ~open
+InsertCard causes open
+impossible InsertCard if ¬hasCard
+
+# Two Switches
+noninertial light
+always light <=> (switch1 <=> switch2)
+Toggle1 causes switch1 if ~switch1
+Toggle1 causes ~switch1 if switch1
+Toggle2 causes switch2 if ~switch2
+Toggle2 causes ~switch2 if switch2
