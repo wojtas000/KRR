@@ -198,6 +198,20 @@ class TransitionGraph:
         pos = nx.spring_layout(G, k=10 / sqrt(G.order()))
         fig, ax = plt.subplots(figsize=(20, 20))
 
+        # add padding to the graph
+        x_values, y_values = zip(*pos.values())
+        x_min, x_max = min(x_values), max(x_values)
+        y_min, y_max = min(y_values), max(y_values)
+
+        padding = 0.2 
+        x_min -= padding
+        x_max += padding
+        y_min -= padding
+        y_max += padding
+
+        ax.set_xlim([x_min, x_max])
+        ax.set_ylim([y_min, y_max])
+
         node_colors = []
         for node in G.nodes:
             if node in self.possible_initial_states:
