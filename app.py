@@ -165,7 +165,7 @@ with tab2:
 
     if st.button("Parse Statements"):
         st.session_state.statement_parser = StatementParser(TransitionGraph())
-        st.session_state.statement_parser.parse(st.session_state.statements)
+        st.session_state.statement_parser.parse([stmt for _, stmt in st.session_state.statements])
         st.session_state.transition_graph = st.session_state.statement_parser.transition_graph
         fig = st.session_state.statement_parser.transition_graph.draw_graph()
         st.write("Fluents:", ", ".join(st.session_state.statement_parser.transition_graph.fluents))
