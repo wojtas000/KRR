@@ -185,7 +185,7 @@ class TransitionGraph:
         G = nx.MultiDiGraph()
 
         for edge in self.edges:
-            G.add_edge(edge.source, edge.target, label=edge.label)
+            G.add_edge(edge.source, edge.target, label=edge.label, weight=edge.duration)
 
         for state in self.generate_possible_states():
             G.add_node(state)

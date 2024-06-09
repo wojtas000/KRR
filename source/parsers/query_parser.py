@@ -1,63 +1,98 @@
-from source.graph.transition_graph import TransitionGraph, StateNode, Edge
-from typing import List, Tuple
-
+import networkx as nx
 
 class QueryParser:
-    def __init__(self, graph: TransitionGraph):
+    def __init__(self, graph: nx.MultiDiGraph):
         self.graph = graph
 
-    def parse_query(self, query: str) -> bool:
-        if "necessary" in query or "possibly" in query:
-            if "after" in query:
-                return self.parse_value_query(query)
-            elif "with time" in query:
-                return self.parse_executability_time_query(query)
-            else:
-                return self.parse_executability_query(query)
-        else:
-            raise ValueError("Invalid query format.")
+    @staticmethod
+    def change_string(s, i, nowy_znak):
+        if i < 0 or i >= len(s):
+            raise IndexError("Index out of range")
+        return s[:i] + nowy_znak + s[i+1:]
 
-    def parse_value_query(self, query: str) -> bool:
-        necessity, formula = map(str.strip, [q for q in query.split("after")[0].split(" ") if q != ""])
-        actions, condition = map(str.strip, query.split("after")[1].split("from"))
-        return self.check_query(necessity, actions.split(","), condition, formula)
-
-    def parse_executability_query(self, query: str) -> bool:
-        necessity, formula = map(str.strip, query.split("executable"))
-        actions, condition = map(str.strip, formula.split("from"))
-        return self.check_query(necessity, actions.split(","), condition)
-
-    def parse_executability_time_query(self, query: str) -> bool:
-        necessity, formula = map(str.strip, query.split("executable"))
-        actions = formula.split("with time")[0].strip()
-        time_limit, condition = map(str.strip, formula.split("with time")[1].split("from"))
-        return self.check_query(necessity, map(str.strip, actions.split(",")), condition, time_limit=int(time_limit))
-
-    def check_query(self, necessity: str, actions: List[str], condition: str, formula: str = None, time_limit: int = None) -> bool:
-        for state in self.graph.states:
-            if self.check_condition(state, condition):
-                current_state = state
-                total_time = 0
-                for action in actions:
-                    next_state, duration = self.get_next_state(current_state, action)
-                    if next_state is None or (time_limit is not None and total_time + duration > time_limit):
-                        return False if necessity == "necessary" else True
-                    current_state = next_state
-                    total_time += duration
-                if formula is not None:
-                    if necessity == "necessary":
-                        if not self.check_condition(current_state, formula):
-                            return False
-                    else:
-                        if self.check_condition(current_state, formula):
-                            return True
-        return True if necessity == "necessary" else False
-
-    def check_condition(self, state: StateNode, condition: str) -> bool:
-        return all(fluent in state.label for fluent in condition.split(" and "))
-
-    def get_next_state(self, state: StateNode, action: str) -> Tuple[StateNode, int]:
-        for edge in self.graph.edges:
-            if edge.source == state and edge.action == action:
-                return edge.target, edge.duration
+    def find_next_state(self, state, action):
+        """Finds the next state after performing the given action from the given state."""
+        for u, v, key, data in self.graph.edges(data=True, keys=True):
+            if u == state and data['label'] == action:
+                return v, data['weight']
         return None, 0
+
+    def find_last_state(self, state, actions):
+        """Finds the last state after performing the sequence of actions from the given state."""
+        subcost = 0
+        for action in actions:
+            state, subcost = self.find_next_state(state, action.replace(' ',''))
+            if state is None:
+                return None, subcost
+            else:
+                subcost += subcost
+        return state, subcost
+
+    @staticmethod
+    def state_satisfies(state, conditions):
+        """Checks if a given state satisfies the given conditions."""
+        for condition in conditions.split('&'):
+            condition = condition.strip()
+            if '~' in condition:
+                fluent = condition.replace('~', '')
+                if state.fluents[fluent] != False:
+                    return False
+            else:
+                fluent = condition
+                if state.fluents[fluent] != True:
+                    return False
+        return True
+
+    def necessary_alpha_after(self, alpha, actions, pi):
+        """Checks if α always holds after performing the sequence of actions from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, _ = self.find_last_state(state, actions)
+                if final_state is None or not self.state_satisfies(final_state, alpha):
+                    return False
+        return True
+
+    def possibly_alpha_after(self, alpha, actions, pi):
+        """Checks if α sometimes holds after performing the sequence of actions from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, _ = self.find_last_state(state, actions)
+                if final_state is not None and self.state_satisfies(final_state, alpha):
+                    return True
+        return False
+
+    def necessary_executable(self, actions, pi):
+        """Checks if the sequence of actions is always executable from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, _ = self.find_last_state(state, actions)
+                if final_state is None:
+                    return False
+        return True
+
+    def possibly_executable(self, actions, pi):
+        """Checks if the sequence of actions is sometimes executable from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, _ = self.find_last_state(state, actions)
+                if final_state is not None:
+                    return True
+        return False
+
+    def necessary_executable_with_cost(self, actions, pi, max_cost):
+        """Checks if the sequence of actions is always executable with a total cost ≤ max_cost from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, total_cost = self.find_last_state(state, actions)
+                if final_state is None or total_cost > max_cost:
+                    return False
+        return True
+
+    def possibly_executable_with_cost(self, actions, pi, max_cost):
+        """Checks if the sequence of actions is sometimes executable with a total cost ≤ max_cost from any state satisfying π."""
+        for state in self.graph.nodes:
+            if self.state_satisfies(state, pi):
+                final_state, total_cost = self.find_last_state(state, actions)
+                if final_state is not None and total_cost <= max_cost:
+                    return True
+        return False

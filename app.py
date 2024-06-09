@@ -2,7 +2,7 @@ import streamlit as st
 from source.graph.transition_graph import TransitionGraph
 from source.parsers.query_parser import QueryParser
 from source.parsers.statement_parser import StatementParser
-from source.parsers.query_parser2 import *
+
 
 def load_examples(file_path):
     examples = {}
@@ -22,6 +22,13 @@ st.title("Action Domain Transition Graph")
 if "statement_parser" not in st.session_state:
     st.session_state.statement_parser = StatementParser(TransitionGraph())
 
+if "query_parser" not in st.session_state:
+    st.session_state.query_parser = QueryParser(TransitionGraph())
+
+if "transition_graph" not in st.session_state:
+    st.session_state.transition_graph = TransitionGraph()
+
+
 examples = load_examples('tests/examples.txt')
 example_names = list(examples.keys())
 selected_example = st.selectbox("Select an example:", example_names)
@@ -35,6 +42,7 @@ if selected_example:
         statements = [s.strip() for s in example_statements if s]
         st.session_state.statement_parser = StatementParser(TransitionGraph())
         st.session_state.statement_parser.parse(statements)
+        st.session_state.transition_graph = st.session_state.statement_parser.transition_graph
         fig = st.session_state.statement_parser.transition_graph.draw_graph()
         st.write("Fluents:", ", ".join(st.session_state.statement_parser.transition_graph.fluents))
         st.write("Actions:", ", ".join(st.session_state.statement_parser.transition_graph.actions))
@@ -49,6 +57,7 @@ if st.button("Add Statements"):
     statements = [s.strip() for s in statements if s]
     st.session_state.statement_parser = StatementParser(TransitionGraph())
     st.session_state.statement_parser.parse(statements)
+    st.session_state.transition_graph = st.session_state.statement_parser.transition_graph
     fig = st.session_state.statement_parser.transition_graph.draw_graph()
     st.write("Fluents:", ", ".join(st.session_state.statement_parser.transition_graph.fluents))
     st.write("Actions:", ", ".join(st.session_state.statement_parser.transition_graph.actions))
@@ -57,6 +66,8 @@ if st.button("Add Statements"):
 
 
 # Queries
+st.session_state.query_parser = QueryParser(st.session_state.transition_graph.generate_graph())
+
 st.subheader("Queries")
 st.write('Enter query:')
 st.write('Alpha: desired state')
@@ -68,14 +79,14 @@ pi = st.text_input('Pi:')
 st.write('Max cost: maximum cost of actions')
 max_cost = st.text_input('Max cost:')
 max_cost = int(max_cost) if max_cost != '' else None
-G = st.session_state.statement_parser.transition_graph
+
 args2func = {
-    'necessary_alpha_after': [necessary_alpha_after, (G, alpha, actions, pi, fluents2order)],
-    'possibly_alpha_after': [possibly_alpha_after, (G, alpha, actions, pi, fluents2order)],
-    'necessary_executable': [necessary_executable, (G, actions, pi, fluents2order)],
-    'possibly_executable': [possibly_executable, (G, actions, pi, fluents2order)],
-    'necessary_executable_with_cost': [necessary_executable_with_cost, (G, actions, pi, max_cost, fluents2order)],
-    'possibly_executable_with_cost': [possibly_executable_with_cost, (G, actions, pi, max_cost, fluents2order)]
+    'necessary_alpha_after': [st.session_state.query_parser.necessary_alpha_after, (alpha, actions, pi)],
+    'possibly_alpha_after': [st.session_state.query_parser.possibly_alpha_after, (alpha, actions, pi)],
+    'necessary_executable': [st.session_state.query_parser.necessary_executable, (actions, pi)],
+    'possibly_executable': [st.session_state.query_parser.possibly_executable, (actions, pi)],
+    'necessary_executable_with_cost': [st.session_state.query_parser.necessary_executable_with_cost, (actions, pi, max_cost)],
+    'possibly_executable_with_cost': [st.session_state.query_parser.possibly_executable_with_cost, (actions, pi, max_cost)]
 }
 
 argnames2func = {
@@ -89,10 +100,11 @@ argnames2func = {
 
 query = st.selectbox('Choose query:', list(args2func.keys()))
 
-# check if all arguments are filled
+# Check if all arguments are filled
 args_ = args2func[query][1]
 st.write('Arguments:', *argnames2func[query])
-all_filled = all([True if arg != '' else False for arg in args_[1:]])
+all_filled = all([arg != '' and arg is not None for arg in args_])
+
 if all_filled:
     result = args2func[query][0](*args_)
     st.write('Result:', result)
