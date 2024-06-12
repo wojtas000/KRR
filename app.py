@@ -67,7 +67,7 @@ with tab1:
         example_statements = examples[selected_example]
         st.text_area("Example Statements:", value="\n".join(example_statements), height=200, disabled=True)
 
-        if st.button("Parse Selected Example"):
+        if st.button("Parse Selected Example", key="parse_selected_example", type="primary"):
             statements = [s.strip() for s in example_statements if s]
             st.session_state.statement_parser = StatementParser(TransitionGraph())
             st.session_state.statement_parser.parse(statements)
@@ -105,7 +105,10 @@ with tab2:
             display_aligned_text("if")
         with col5:
             precondition = st.text_input("Precondition formula:")
-        statement = f"{action} causes {effect} if {precondition}"
+        if precondition:
+            statement = f"{action} causes {effect} if {precondition}"
+        else:
+            statement = f"{action} causes {effect}"
     
     elif selected_statement == "releases":
         col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 2])
@@ -119,7 +122,10 @@ with tab2:
             display_aligned_text("if")
         with col5:
             precondition = st.text_input("Precondition formula:")
-        statement = f"{action} releases {effect} if {precondition}"
+        if precondition:
+            statement = f"{action} releases {effect} if {precondition}"
+        else:
+            statement = f"{action} releases {effect}"
     
     elif selected_statement == "lasts":
         col1, col2, col3 = st.columns([1, 1, 1])
@@ -157,13 +163,23 @@ with tab2:
             formula = st.text_input("Formula:")
         statement = f"impossible {formula}"
     
-    if st.button("Add Statement", key="add_statement"):
-        st.session_state.statements.append((selected_statement, statement))
-        st.write("Current Statements:")
-        for stmt_type, stmt in st.session_state.statements:
-            display_statement(stmt_type, stmt)
+    with open("style.css") as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    if st.button("Parse Statements"):
+    if st.button("Add Statement", key="add_statement", type="primary"):
+        st.session_state.statements.append((selected_statement, statement))
+
+    st.write("Current Statements:")
+    for i, (stmt_type, stmt) in enumerate(st.session_state.statements):
+        col1, col2 = st.columns([8, 2])
+        with col1:
+            display_statement(stmt_type, stmt)
+        with col2:
+            if st.button("Remove", key=f"remove_statement_{i}", type=f"secondary"):
+                del st.session_state.statements[i]
+                st.rerun()
+
+    if st.button("Parse Statements", key="parse_statements", type="primary"):
         st.session_state.statement_parser = StatementParser(TransitionGraph())
         st.session_state.statement_parser.parse([stmt for _, stmt in st.session_state.statements])
         st.session_state.transition_graph = st.session_state.statement_parser.transition_graph

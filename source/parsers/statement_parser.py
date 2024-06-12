@@ -35,12 +35,11 @@ class StatementParser:
             "impossible": ImpossibleParser
         }
 
-    def parse_statement(self, statement: str) -> None:
+    def parse_statement(self, statement):
         keyword = next((k for k in self.parser_classes if k in statement), None)
         if keyword:
             parser = self.parser_classes[keyword](self.transition_graph)
             parser.parse(statement)
-            self.transition_graph = parser.get_transition_graph()
         else:
             raise ValueError(f"Unsupported statement: {statement}")
 
@@ -64,7 +63,7 @@ class StatementParser:
 
     def extract_all_fluents(self) -> List[str]:
         fluents = []
-        for statement in self.prepare_statements():
+        for statement in [self.prepare_statements()]:
             keyword = next((k for k in self.parser_classes if k in statement), None)
             if keyword:
                 parser = self.parser_classes[keyword](self.transition_graph)
@@ -81,13 +80,59 @@ class StatementParser:
                 self.statements["initially"] + self.statements["causes"] + self.statements["releases"] + \
                 self.statements["after"] + self.statements["lasts"]
 
+    def group_causes_statements_by_action(self, causes_statements) -> dict:
+        causes_statements_by_action = {}
+        for statement in causes_statements:
+            action = CausesParser(self.transition_graph).extract_actions(statement)[0]
+            if action in causes_statements_by_action:
+                causes_statements_by_action[action] = causes_statements_by_action[action] + [statement]
+            else:
+                causes_statements_by_action[action] = [statement]
+        return causes_statements_by_action
+
     def parse(self, statements: str) -> None:
+        
+        # Prepare transition graph: clear graph, add all fluents and actions.
+
         for statement in statements:
             self.add_statement(statement)
         
         self.clear_transition_graph()
+        
         self.transition_graph.add_fluents(self.extract_all_fluents())
         self.transition_graph.add_actions(self.extract_all_actions())
 
-        for statement in self.prepare_statements():
-            self.parse_statement(statement)
+        # Parse always and impossible statements
+
+        for statement in self.statements['always']:
+            always_states = self.parse_statement(statement)
+            self.transition_graph.always_states.extend(always_states)
+        
+        for statement in self.statements['impossible']:
+            impossible_states = self.parse_statement(statement)
+            self.transition_graph.impossible_states.extend(impossible_states)
+
+        self.transition_graph.states = self.transition_graph.generate_possible_states()
+
+        # Parse causes statements
+
+        grouped_causes_statements = self.group_causes_statements_by_action(self.statements['causes'])
+        for action, statements in grouped_causes_statements.items():
+            edges = self.parse_statement(statements)
+            self.transition_graph.add_edges(edges)
+        
+        # Parse releases statements
+
+        for statement in self.statements['releases']:
+            edges = self.parse_statement(statement)
+            self.transition_graph.add_edges(edges)
+
+        # Parse initially statements
+
+        for statement in self.statements['initially']:
+            self.transition_graph.add_possible_initial_states(self.parse_statement(statement))
+
+        # Parse lasts statements
+        for statement in self.statements['lasts']:
+            durations = self.parse_statement(statement)
+            self.transition_graph.add_durations(durations)

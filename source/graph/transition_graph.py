@@ -1,6 +1,6 @@
 from itertools import product
 from math import sqrt
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -86,34 +86,29 @@ class TransitionGraph:
             if fluent not in self.fluents:
                 self.fluents.append(fluent)
 
+    def add_durations(self, durations: List[Tuple(int, int)]) -> None:
+        for (index, time) in durations:
+            self.edges[index] = self.edges[index].add_duration(time)
+
+    def add_possible_initial_states(self, states: List[StateNode]) -> None:
+        self.possible_initial_states = list(set(self.possible_initial_states + states))
+
+    def add_edges(self, edges: List[Edge]) -> None:
+        self.edges = list(set(self.edges + edges))
+
     def add_possible_initial_state(self, state: StateNode) -> None:
-        self.possible_initial_states.append(state)
+        if state not in self.possible_initial_states:
+            self.possible_initial_states.append(state)
 
     def add_possible_ending_state(self, state: StateNode) -> None:
-        self.possible_ending_states.append(state)
-
-    def add_state(self, state: StateNode) -> None:
-        if state not in self.states:
-            self.states.append(state)
+        if state not in self.possible_ending_states:
+            self.possible_ending_states.append(state)
 
     def add_actions(self, actions: str) -> None:
         for action in actions:
             if action not in self.actions:
                 self.actions.append(action)
 
-    def remove_edge(
-        self, action: str, from_state: StateNode, to_state: StateNode
-    ) -> None:
-        edges_copy = []
-        for i, edge in enumerate(self.edges):
-            if (
-                edge.action == action
-                and edge.source == from_state
-                and edge.target == to_state
-            ):
-                continue
-            edges_copy.append(edge)
-        self.edges = edges_copy
 
     def generate_all_states(self) -> None:
         return [
@@ -133,17 +128,6 @@ class TransitionGraph:
         if self.impossible_states:
             return list(set(all_states) - set(self.impossible_states))
         return all_states
-
-    def add_edge(
-        self,
-        source: StateNode,
-        action: str,
-        target: StateNode,
-        duration: int = 0,
-    ) -> None:
-        edge = Edge(source, action, target, duration)
-        if edge not in self.edges:
-            self.edges.append(edge)
 
     def update_states_with_new_fluents(self) -> None:
         new_edges = []
