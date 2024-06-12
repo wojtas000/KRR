@@ -86,7 +86,7 @@ class TransitionGraph:
             if fluent not in self.fluents:
                 self.fluents.append(fluent)
 
-    def add_durations(self, durations: List[Tuple(int, int)]) -> None:
+    def add_durations(self, durations: List[Tuple[int, int]]) -> None:
         for (index, time) in durations:
             self.edges[index] = self.edges[index].add_duration(time)
 
