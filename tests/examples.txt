@@ -14,11 +14,6 @@ Shoot causes ~loaded
 Shoot causes ~alive if loaded
 ~alive after Shoot
 
-# Stolen Car Scenario
-initially ~stolen
-stolen after WAIT, WAIT, WAIT
-
-
 # Modification of Yale Shooting Problem
 initially loaded & walking
 always walking => alive
@@ -32,6 +27,9 @@ Load causes loaded
 Shoot causes ~loaded
 Shoot causes ~alive if loaded
 Spin releases loaded if loaded
+
+# Coin toss
+Toss releases heads
 
 # Opening the door
 initially ~open
