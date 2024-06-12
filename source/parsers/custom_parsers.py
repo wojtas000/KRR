@@ -48,9 +48,9 @@ class CustomParser(ABC):
                 formula = formula.replace(f"~{fluent}", str(not value))
                 formula = formula.replace(f"{fluent}",str(value))
             return formula
-            print(formula)
+
         logical_statements = self.logical_formula_parser.extract_logical_statements(formula)
-        if logical_statements == None:
+        if logical_statements is None:
             raise ValueError(f"Contradictory statement for {self.name} statement. In formula: {formula}")
         for logical_statement in logical_statements:
             formula = replace_fluents_with_values(logical_statement, state)
@@ -115,18 +115,36 @@ class CausesParser(CustomParser):
 
         for from_state in self.transition_graph.states:
             effect_formulas = []
+            updates = []
+            
             for statement in statements:
-                print(statement)
-                print(from_state)
                 action, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
-                print(action, effect_formula, precondition_formula)
+                
                 if self.precondition_met(precondition_formula, from_state):
                     effect_formulas.append(effect_formula)
+            
             for to_state in self.transition_graph.states:
                 if all(self.evaluate_formula(effect_formula, to_state) for effect_formula in effect_formulas):
-                    edges.append(Edge(from_state, action, to_state))
+                    difference = self.diff_between_states(from_state, to_state)
+                    updates.append((to_state, difference, len(difference)))
+            
+            # get all states with least amount of changes and create edges
+            if updates:
+                min_changes = min([update[2] for update in updates])
+                for update in updates:
+                    if update[2] == min_changes:
+                        to_state, difference, _ = update
+                        edges.append(Edge(from_state, action, to_state))
+        
         return edges
 
+
+    def diff_between_states(self, from_node: StateNode, to_node: StateNode) -> Dict[str, bool]:
+        diff = {}
+        for fluent, value in to_node.fluents.items():
+            if from_node.fluents[fluent] != value:
+                diff[fluent] = value
+        return diff
 
 class ReleasesParser(CausesParser):
 
@@ -136,7 +154,7 @@ class ReleasesParser(CausesParser):
 
     def extract_actions(self, statement: str) -> str:
         statement = statement.replace("releases", "causes")
-        return super().extract_actions(statements)
+        return super().extract_actions(statement)
 
     def parse(self, statement: str) -> List:
 
@@ -177,50 +195,44 @@ class LastsParser(CustomParser):
 
 class AfterParser(CustomParser):
 
-    def extract_actions(self, statements: str) -> str:
-        all_actions = []
-        for statement in statements:
-            all_actions += statement.split("after")[0].strip().split(",")
-        return all_actions
+    def extract_actions(self, statement: str) -> str:
+        action_chain = statement.split("after")[1].strip()
+        if ',' in action_chain:
+            return action_chain.split(",")
+        return [action_chain]
 
-    def extract_fluents(self, statements: str) -> List[str]:
-        all_fluents = []
-        for statement in statements:
-            effect_formula, actions = statement.split("after")
-            all_fluents += self.logical_formula_parser.extract_fluents(effect_formula)
-        return all_fluents
+    def extract_fluents(self, statement: str) -> List[str]:
+        effect_formula, actions = statement.split("after")
+        return self.logical_formula_parser.extract_fluents(effect_formula)
     
-    def parse(self, statements: str) -> None:
+    def parse(self, statement: str) -> None:
         possible_initial_states = self.transition_graph.possible_initial_states
         possible_ending_states = []
-        for statement in statements:
-            effect_formula, actions = map(str.strip, statement.split("after"))
-            actions = actions.split(",")[::-1]
+        effect_formula, actions = map(str.strip, statement.split("after"))
+        actions = actions.split(",")[::-1] if "," in actions else [actions]
 
-            # Find possible ending states
-            for logical_statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
-                for edge in self.transition_graph.edges:
-                    if edge.action == action[0]:
-                        fluent_dict = self.logical_formula_parser.extract_fluent_dict(logical_statement)
-                        if all(fluent in edge.target.fluents for fluent in fluent_dict):
-                            possible_ending_states.append(edge.target)
+        # Find possible ending states
+        for logical_statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
+            for edge in self.transition_graph.edges:
+                if edge.action == actions[0]:
+                    fluent_dict = self.logical_formula_parser.extract_fluent_dict(logical_statement)
+                    if all(fluent in edge.target.fluents for fluent in fluent_dict):
+                        possible_ending_states.append(edge.target)
 
-            # Find possible initial states
-            possible_states = possible_ending_states
+        # Find possible initial states
+        possible_states = possible_ending_states
+        possible_states_prev = []
+        for action in actions:
+            for edge in self.transition_graph.edges:
+                if edge.action == action and edge.target in possible_states:
+                    possible_states_prev.append(edge.source)
+            if not possible_states_prev:
+                raise ValueError(f"Contradictory statement for after statement. In formula: {effect_formula}")
+            possible_states = possible_states_prev
             possible_states_prev = []
-            for action in actions:
-                for edge in self.transition_graph.edges:
-                    if edge.action == action and edge.target in possible_states:
-                        possible_states_prev.append(edge.source)
-                if not possible_states_prev:
-                    raise ValueError(f"Contradictory statement for after statement. In formula: {effect_formula}")
-                possible_states = possible_states_prev
-                possible_states_prev = []
-            
-            for state in set(possible_initial_states).intersection(possible_states):
-                self.transition_graph.add_possible_initial_state(state)
-            for state in possible_ending_states:
-                self.transition_graph.add_possible_ending_state(state) 
+        
+        initial_states_for_removal = [state for state in possible_initial_states if state not in possible_states]
+        return initial_states_for_removal, possible_ending_states
 
 
 class AlwaysParser(CustomParser):
@@ -232,16 +244,10 @@ class AlwaysParser(CustomParser):
         always_logic = statement.split("always")[1].strip()
         return self.logical_formula_parser.extract_fluents(always_logic)
 
-    def always(self, state: StateNode, always_statements: List = []) -> bool:
-        if always_statements and all(not self.evaluate_formula(always_statement, state) for always_statement in always_statements):
-            return False
-        return True
-
     def parse(self, statement: str) -> None:
         always_logic = statement.split("always")[1].strip()
         always_statements = self.logical_formula_parser.extract_logical_statements(always_logic)
-        self.transition_graph.always += always_statements
-        return list(filter(lambda state: self.always(state, always_statements), self.transition_graph.generate_all_states()))
+        return list(filter(lambda state: self.evaluate_formula(always_logic, state), self.transition_graph.generate_all_states()))
 
 
 class ImpossibleParser(CustomParser):
@@ -253,13 +259,6 @@ class ImpossibleParser(CustomParser):
         impossible_logic = statement.split("impossible")[1].strip()
         return self.logical_formula_parser.extract_fluents(impossible_logic)
 
-    def impossible(self, state: StateNode, impossible_statements: List = []) -> bool:
-        if impossible_statements and any(self.evaluate_formula(impossible_statement, state) for impossible_statement in impossible_statements):
-            return True
-        return False
-
     def parse(self, statement: str) -> None:
         impossible_logic = statement.split("impossible")[1].strip()
-        impossible_statements = self.logical_formula_parser.extract_logical_statements(impossible_logic)
-        self.transition_graph.impossible += impossible_statements
-        return list(filter(lambda state: self.impossible(state, impossible_statements), self.transition_graph.generate_all_states()))
+        return list(filter(lambda state: self.evaluate_formula(impossible_logic, state), self.transition_graph.generate_all_states()))

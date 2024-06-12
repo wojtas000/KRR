@@ -104,7 +104,6 @@ class StatementParser:
             self.add_statement(statement)
         
         self.clear_transition_graph()
-        print(self.statements)
         self.transition_graph.add_fluents(self.extract_all_fluents())
         self.transition_graph.add_actions(self.extract_all_actions())
 
@@ -112,6 +111,9 @@ class StatementParser:
 
         for statement in self.statements['always']:
             always_states = self.parse_statement(statement)
+            print(always_states)
+            for state in always_states:
+                print(state)
             self.transition_graph.always_states.extend(always_states)
         
         for statement in self.statements['impossible']:
@@ -136,6 +138,12 @@ class StatementParser:
         if self.statements['initially']:
             initially_statement = self.merge_initially_statements(self.statements['initially'])
             self.transition_graph.add_possible_initial_states(self.parse_statement(initially_statement))
+
+        # Parse after statements
+        for statement in self.statements['after']:
+            initial_states_for_removal, possible_ending_states = self.parse_statement(statement)
+            self.transition_graph.remove_possible_initial_states(initial_states_for_removal)
+            self.transition_graph.add_possible_ending_states(possible_ending_states)
 
         # Parse lasts statements
         for statement in self.statements['lasts']:

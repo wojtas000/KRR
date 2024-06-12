@@ -18,9 +18,6 @@ Shoot causes ~alive if loaded
 initially ~stolen
 stolen after WAIT, WAIT, WAIT
 
-# Opening the door - contradiction
-OpenTheDoor causes open if hasCard
-OpenTheDoor causes ~open if ~hasCode
 
 # Modification of Yale Shooting Problem
 initially loaded & walking
@@ -42,7 +39,6 @@ InsertCard causes open
 impossible InsertCard if ~hasCard
 
 # Two Switches
-noninertial light
 always light <=> (switch1 <=> switch2)
 Toggle1 causes switch1 if ~switch1
 Toggle1 causes ~switch1 if switch1

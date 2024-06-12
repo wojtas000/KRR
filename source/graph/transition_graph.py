@@ -96,6 +96,12 @@ class TransitionGraph:
     def add_possible_initial_states(self, states: List[StateNode]) -> None:
         self.possible_initial_states = list(set(self.possible_initial_states + states))
 
+    def add_possible_ending_states(self, states: List[StateNode]) -> None:
+        self.possible_ending_states = list(set(self.possible_ending_states + states))
+
+    def remove_possible_initial_states(self, states: List[StateNode]) -> None:
+        self.possible_initial_states = list(set(self.possible_initial_states) - set(states))
+
     def add_edges(self, edges: List[Edge]) -> None:
         self.edges = list(set(self.edges + edges))
 
