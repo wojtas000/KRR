@@ -63,6 +63,9 @@ class Edge:
             and self.target == other.target
         )
 
+    def __hash__(self) -> int:
+        return hash((self.source, self.action, self.target, self.duration))
+
     def add_duration(self, duration: int) -> None:
         self.duration = duration
         self.label = f"{self.action}\nDuration: {duration}"

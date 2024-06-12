@@ -3,8 +3,19 @@ import re
 from abc import ABC, abstractmethod
 from source.graph.transition_graph import TransitionGraph, StateNode, Edge
 from source.parsers.logical_formula_parser import LogicalFormulaParser
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Any, Callable
+from functools import wraps
 
+def exception_handler_decorator(method: Callable) -> Callable:
+    @wraps(method)
+    def wrapper(*args, **kwargs) -> Any:
+        try:
+            return method(*args, **kwargs)
+        except Exception as e:
+            statement = kwargs.get('statement')
+            error_message = f"An error occurred in {method.__name__} with statement '{statement}': {e}"
+            raise RuntimeError(error_message) from e
+    return wrapper
 
 class CustomParser(ABC):
     def __init__(self, transition_graph: TransitionGraph):
@@ -13,16 +24,19 @@ class CustomParser(ABC):
         self.name = self.__class__.__name__.split("Parser")[0].lower()
         self.statements = []
 
+    @exception_handler_decorator 
     @abstractmethod
     def extract_actions(self, statement: str) -> str:
         pass
 
+    @exception_handler_decorator
     @abstractmethod
     def extract_fluents(self, statement: str) -> List[str]:
         pass
-
+    
+    @exception_handler_decorator
     @abstractmethod
-    def parse(self, statement: str, *args, **kwargs) -> None:
+    def parse(self, statement: str, *args, **kwargs):
         pass
 
     def get_transition_graph(self) -> TransitionGraph:
@@ -34,6 +48,7 @@ class CustomParser(ABC):
                 formula = formula.replace(f"~{fluent}", str(not value))
                 formula = formula.replace(f"{fluent}",str(value))
             return formula
+            print(formula)
         logical_statements = self.logical_formula_parser.extract_logical_statements(formula)
         if logical_statements == None:
             raise ValueError(f"Contradictory statement for {self.name} statement. In formula: {formula}")
@@ -43,7 +58,7 @@ class CustomParser(ABC):
                 return True
         return False
 
-    def precondition_met(self, state: StateNode, precondition: Union[str, bool]) -> bool:
+    def precondition_met(self, precondition: Union[str, bool], state: StateNode,) -> bool:
         if len(precondition) == 0:
             return True
         return self.evaluate_formula(precondition, state)
@@ -80,36 +95,32 @@ class CausesParser(CustomParser):
         action, effect = map(str.strip, statement.split("causes"))
         effect_formula = effect.split(" if ")[0].strip() if " if " in effect else effect.strip()
         precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
+
         return action, effect_formula, precondition_formula
 
     def extract_actions(self, statement: str) -> str:
-        all_actions = []
-        for statement in statements:
-            action, _, _ = self.get_action_effect_and_precondition(statement)
-            all_actions.append(action)
-        return all_actions
+        action, _, _ = self.get_action_effect_and_precondition(statement)
+        return [action]
 
-    def extract_fluents(self, statements: str) -> List[str]:
-        all_fluents = []
-        for statement in statements:
-            _, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
+    def extract_fluents(self, statement: str) -> List[str]:
+        _, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
 
-            effect_fluents = self.logical_formula_parser.extract_fluents(effect_formula)
-            precondition_fluents = self.logical_formula_parser.extract_fluents(precondition_formula)
-            all_fluents += effect_fluents + precondition_fluents
-    
-        return list(set(all_fluents))
+        effect_fluents = self.logical_formula_parser.extract_fluents(effect_formula)
+        precondition_fluents = self.logical_formula_parser.extract_fluents(precondition_formula)
+        return effect_fluents + precondition_fluents
 
     def parse(self, statements: List) -> List:
 
         edges = []
 
-        action, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
         for from_state in self.transition_graph.states:
             effect_formulas = []
             for statement in statements:
+                print(statement)
+                print(from_state)
                 action, effect_formula, precondition_formula = self.get_action_effect_and_precondition(statement)
-                if self.evaluate_formula(precondition_formula, from_state):
+                print(action, effect_formula, precondition_formula)
+                if self.precondition_met(precondition_formula, from_state):
                     effect_formulas.append(effect_formula)
             for to_state in self.transition_graph.states:
                 if all(self.evaluate_formula(effect_formula, to_state) for effect_formula in effect_formulas):
@@ -133,7 +144,7 @@ class ReleasesParser(CausesParser):
 
         action, modified_fluent, precondition_formula = self.get_action_effect_and_precondition(statement.replace("releases", "causes"))
         for from_state in self.transition_graph.states:
-            if self.precondition_met(from_state, precondition_formula):
+            if self.precondition_met(precondition_formula, from_state):
                 to_state = StateNode(fluents=from_state.fluents.copy())
                 to_state.update({modified_fluent: not from_state.fluents[modified_fluent]})
 

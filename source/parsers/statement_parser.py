@@ -104,7 +104,7 @@ class StatementParser:
             self.add_statement(statement)
         
         self.clear_transition_graph()
-        
+        print(self.statements)
         self.transition_graph.add_fluents(self.extract_all_fluents())
         self.transition_graph.add_actions(self.extract_all_actions())
 
@@ -121,10 +121,9 @@ class StatementParser:
         self.transition_graph.states = self.transition_graph.generate_possible_states()
 
         # Parse causes statements
-
         grouped_causes_statements = self.group_causes_statements_by_action(self.statements['causes'])
         for action, statements in grouped_causes_statements.items():
-            edges = self.parse_statement(statements)
+            edges = self.parser_classes['causes'](self.transition_graph).parse(statements)
             self.transition_graph.add_edges(edges)
         
         # Parse releases statements
@@ -134,9 +133,9 @@ class StatementParser:
             self.transition_graph.add_edges(edges)
 
         # Parse initially statements
-
-        initially_statement = self.merge_initially_statements(self.statements['initially'])
-        self.transition_graph.add_possible_initial_states(self.parse_statement(initially_statement))
+        if self.statements['initially']:
+            initially_statement = self.merge_initially_statements(self.statements['initially'])
+            self.transition_graph.add_possible_initial_states(self.parse_statement(initially_statement))
 
         # Parse lasts statements
         for statement in self.statements['lasts']:
