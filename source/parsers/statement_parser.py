@@ -39,7 +39,7 @@ class StatementParser:
         keyword = next((k for k in self.parser_classes if k in statement), None)
         if keyword:
             parser = self.parser_classes[keyword](self.transition_graph)
-            parser.parse(statement)
+            return parser.parse(statement)
         else:
             raise ValueError(f"Unsupported statement: {statement}")
 
@@ -63,7 +63,7 @@ class StatementParser:
 
     def extract_all_fluents(self) -> List[str]:
         fluents = []
-        for statement in [self.prepare_statements()]:
+        for statement in self.prepare_statements():
             keyword = next((k for k in self.parser_classes if k in statement), None)
             if keyword:
                 parser = self.parser_classes[keyword](self.transition_graph)
@@ -89,6 +89,12 @@ class StatementParser:
             else:
                 causes_statements_by_action[action] = [statement]
         return causes_statements_by_action
+
+    def merge_initially_statements(self, statements: List[str]) -> str:
+        base_statement = "initially" + f"({statements[0].split('initially')[1].strip()})"
+        for statement in statements[1:]:
+            base_statement += f" & ({statement.split('initially')[1].strip()})"
+        return base_statement
 
     def parse(self, statements: str) -> None:
         
@@ -129,8 +135,8 @@ class StatementParser:
 
         # Parse initially statements
 
-        for statement in self.statements['initially']:
-            self.transition_graph.add_possible_initial_states(self.parse_statement(statement))
+        initially_statement = self.merge_initially_statements(self.statements['initially'])
+        self.transition_graph.add_possible_initial_states(self.parse_statement(initially_statement))
 
         # Parse lasts statements
         for statement in self.statements['lasts']:

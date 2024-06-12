@@ -76,7 +76,7 @@ class InitiallyParser(CustomParser):
 
 class CausesParser(CustomParser):
     
-    def get_action_effect_and_precondition(self, statement: str) -> Tuple[str, str]:
+    def get_action_effect_and_precondition(self, statement: str) -> Tuple[str, str, str]:
         action, effect = map(str.strip, statement.split("causes"))
         effect_formula = effect.split(" if ")[0].strip() if " if " in effect else effect.strip()
         precondition_formula = effect.split(" if ")[1] if " if " in effect else ""
