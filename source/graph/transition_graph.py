@@ -52,7 +52,7 @@ class Edge:
         self.action = action
         self.target = target
         self.duration = duration
-        self.label = f"{action}\nDuration: {duration}"
+        self.label = f"{action}"
 
     def __str__(self) -> str:
         return (
