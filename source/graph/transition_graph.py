@@ -52,7 +52,7 @@ class Edge:
         self.action = action
         self.target = target
         self.duration = duration
-        self.label = f"{action}"
+        self.label = f"{action}\nDuration: {duration}"
 
     def __str__(self) -> str:
         return (
@@ -182,6 +182,7 @@ class TransitionGraph:
 
         for edge in self.edges:
             G.add_edge(edge.source, edge.target, label=edge.label, weight=edge.duration)
+            G.edges[edge.source, edge.target, 0]["action"] = edge.action
 
         for state in self.generate_possible_states():
             G.add_node(state)

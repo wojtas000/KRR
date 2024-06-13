@@ -13,7 +13,7 @@ class QueryParser:
     def find_next_state(self, state, action):
         """Finds the next state after performing the given action from the given state."""
         for u, v, key, data in list(self.graph.edges(data=True, keys=True)):
-            if u == state and data['label'] == action:
+            if u == state and data['action'] == action:
                 return v, data['weight']
         return None, 0
 
