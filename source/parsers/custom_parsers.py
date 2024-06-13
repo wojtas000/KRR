@@ -174,22 +174,18 @@ class ReleasesParser(CausesParser):
 
 class LastsParser(CustomParser):
 
-    def extract_actions(self, statements: str) -> str:
-        all_actions = []
-        for statement in statements:
-            all_actions.append(statement.split("lasts")[0].strip())
-        return all_actions
+    def extract_actions(self, statement: str) -> str:
+        return statement.split("lasts")[0].strip()
 
-    def extract_fluents(self, statements: str) -> List[str]:
+    def extract_fluents(self, statement: str) -> List[str]:
         return []
     
-    def parse(self, statements: str) -> None:
+    def parse(self, statement: str) -> None:
         durations = []
-        for statement in statements:
-            action, duration = map(str.strip, statement.split("lasts"))
-            for i, edge in enumerate(self.transition_graph.edges):
-                if edge.action == action and edge.source != edge.target:
-                    durations.append((i, duration))
+        action, duration = map(str.strip, statement.split("lasts"))
+        for i, edge in enumerate(self.transition_graph.edges):
+            if edge.action == action and edge.source != edge.target:
+                durations.append((i, int(duration)))
         return durations
 
 
@@ -262,3 +258,16 @@ class ImpossibleParser(CustomParser):
     def parse(self, statement: str) -> None:
         impossible_logic = statement.split("impossible")[1].strip()
         return list(filter(lambda state: self.evaluate_formula(impossible_logic, state), self.transition_graph.generate_all_states()))
+
+
+class NoninertialParser(CustomParser):
+    
+        def extract_actions(self, statement: str) -> str:
+            return []
+    
+        def extract_fluents(self, statement: str) -> List[str]:
+            noninertial_logic = statement.split("noninertial")[1].strip()
+            return self.logical_formula_parser.extract_fluents(noninertial_logic)
+    
+        def parse(self, statement: str) -> None:
+            pass

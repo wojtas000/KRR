@@ -8,7 +8,8 @@ from source.parsers.custom_parsers import (
     LastsParser,
     AfterParser,
     AlwaysParser,
-    ImpossibleParser
+    ImpossibleParser,
+    NoninertialParser
 )
 
 
@@ -17,6 +18,7 @@ class StatementParser:
     def __init__(self, transition_graph: TransitionGraph):
         self.transition_graph = transition_graph
         self.statements = {
+            "noninertial": [],
             "initially": [],
             "causes": [],
             "releases": [],
@@ -148,4 +150,9 @@ class StatementParser:
         # Parse lasts statements
         for statement in self.statements['lasts']:
             durations = self.parse_statement(statement)
+            print(durations)
             self.transition_graph.add_durations(durations)
+
+        # Parse noninertial statements
+        for statement in self.statements['noninertial']:
+            pass

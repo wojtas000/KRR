@@ -94,7 +94,7 @@ class TransitionGraph:
 
     def add_durations(self, durations: List[Tuple[int, int]]) -> None:
         for (index, time) in durations:
-            self.edges[index] = self.edges[index].add_duration(time)
+            self.edges[index].add_duration(time)
 
     def add_possible_initial_states(self, states: List[StateNode]) -> None:
         self.possible_initial_states = list(set(self.possible_initial_states + states))
@@ -181,7 +181,7 @@ class TransitionGraph:
         G = nx.MultiDiGraph()
 
         for edge in self.edges:
-            G.add_edge(edge.source, edge.target, label=edge.label, weight=edge.duration)
+            G.add_edge(edge.source, edge.target, label=edge.label, weight=int(edge.duration))
             G.edges[edge.source, edge.target, 0]["action"] = edge.action
 
         for state in self.generate_possible_states():
