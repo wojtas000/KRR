@@ -17,6 +17,9 @@ class StateNode:
                 for fluent, value in fluents.items()
             ]
         )
+        self.binary_repr = "".join(
+            ["1" if value else "0" for value in fluents.values()]
+        )
 
     def __eq__(self, other: "StateNode") -> bool:
         return self.fluents == other.fluents

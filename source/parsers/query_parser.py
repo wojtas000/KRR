@@ -45,7 +45,7 @@ class QueryParser:
 
     def necessary_alpha_after(self, alpha, actions, pi):
         """Checks if α always holds after performing the sequence of actions from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, _ = self.find_last_state(state, actions)
                 if final_state is None or not self.state_satisfies(final_state, alpha):
@@ -54,7 +54,7 @@ class QueryParser:
 
     def possibly_alpha_after(self, alpha, actions, pi):
         """Checks if α sometimes holds after performing the sequence of actions from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, _ = self.find_last_state(state, actions)
                 if final_state is not None and self.state_satisfies(final_state, alpha):
@@ -63,7 +63,7 @@ class QueryParser:
 
     def necessary_executable(self, actions, pi):
         """Checks if the sequence of actions is always executable from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, _ = self.find_last_state(state, actions)
                 if final_state is None:
@@ -72,7 +72,7 @@ class QueryParser:
 
     def possibly_executable(self, actions, pi):
         """Checks if the sequence of actions is sometimes executable from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, _ = self.find_last_state(state, actions)
                 if final_state is not None:
@@ -81,7 +81,7 @@ class QueryParser:
 
     def necessary_executable_with_cost(self, actions, pi, max_cost):
         """Checks if the sequence of actions is always executable with a total cost ≤ max_cost from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, total_cost = self.find_last_state(state, actions)
                 if final_state is None or total_cost > max_cost:
@@ -90,7 +90,7 @@ class QueryParser:
 
     def possibly_executable_with_cost(self, actions, pi, max_cost):
         """Checks if the sequence of actions is sometimes executable with a total cost ≤ max_cost from any state satisfying π."""
-        for state in self.graph.nodes:
+        for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, total_cost = self.find_last_state(state, actions)
                 if final_state is not None and total_cost <= max_cost:
