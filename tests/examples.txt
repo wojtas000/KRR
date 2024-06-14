@@ -29,6 +29,7 @@ Shoot causes ~alive if loaded
 Spin releases loaded if loaded
 
 # Coin toss
+initially heads
 Toss releases heads
 
 # Opening the door
@@ -37,8 +38,24 @@ InsertCard causes open
 impossible InsertCard if ~hasCard
 
 # Two Switches
+noninertial light
 always light <=> (switch1 <=> switch2)
 Toggle1 causes switch1 if ~switch1
 Toggle1 causes ~switch1 if switch1
 Toggle2 causes switch2 if ~switch2
 Toggle2 causes ~switch2 if switch2
+
+# Example 4.5
+A causes p or q
+B causes ~v
+impossible B if ~q
+
+# Mike's busy day
+
+initially ~car_washed and ~lawn_mowed and ~gift_bought
+WASH_CAR causes car_washed if ~car_washed
+MOW_LAWN causes lawn_mowed if ~lawn_mowed
+BUY_GIFT causes gift_bought if ~gift_bought
+WASH_CAR lasts 30
+MOW_LAWN lasts 45
+BUY_GIFT lasts 90

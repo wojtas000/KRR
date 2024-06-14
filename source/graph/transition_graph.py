@@ -82,10 +82,8 @@ class TransitionGraph:
         self.edges: List[Edge] = []
         self.possible_initial_states = []
         self.possible_ending_states = []
-        self.always = []
-        self.impossible = []
         self.always_states = []
-        self.impossible_states = []
+        self.impossible_edges = []
 
     def add_fluents(self, fluents: str) -> None:
         for fluent in fluents:
@@ -95,6 +93,9 @@ class TransitionGraph:
     def add_durations(self, durations: List[Tuple[int, int]]) -> None:
         for (index, time) in durations:
             self.edges[index].add_duration(time)
+
+    def add_impossible_edges(self, edges: List[Edge]) -> None:
+        self.impossible_edges = list(set(self.impossible_edges + edges))
 
     def add_possible_initial_states(self, states: List[StateNode]) -> None:
         self.possible_initial_states = list(set(self.possible_initial_states + states))
@@ -129,17 +130,9 @@ class TransitionGraph:
         ]
 
     def generate_possible_states(self) -> None:
-        always_impossible_intersection = set(self.always_states) & set(self.impossible_states)
-        if always_impossible_intersection:
-            raise ValueError(
-                f"Contradiction: state {always_impossible_intersection} is both always and impossible."
-            )
         if self.always_states:
             return self.always_states
-        all_states = self.generate_all_states()
-        if self.impossible_states:
-            return list(set(all_states) - set(self.impossible_states))
-        return all_states
+        return self.generate_all_states()
 
     def update_states_with_new_fluents(self) -> None:
         new_edges = []

@@ -113,14 +113,11 @@ class StatementParser:
 
         for statement in self.statements['always']:
             always_states = self.parse_statement(statement)
-            print(always_states)
-            for state in always_states:
-                print(state)
             self.transition_graph.always_states.extend(always_states)
         
         for statement in self.statements['impossible']:
-            impossible_states = self.parse_statement(statement)
-            self.transition_graph.impossible_states.extend(impossible_states)
+            impossible_edges = self.parse_statement(statement)
+            self.transition_graph.add_impossible_edges(impossible_edges)
 
         self.transition_graph.states = self.transition_graph.generate_possible_states()
 
@@ -150,7 +147,6 @@ class StatementParser:
         # Parse lasts statements
         for statement in self.statements['lasts']:
             durations = self.parse_statement(statement)
-            print(durations)
             self.transition_graph.add_durations(durations)
 
         # Parse noninertial statements
