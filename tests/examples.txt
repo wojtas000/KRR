@@ -1,6 +1,10 @@
 # Contradictory initially statement
 initially f and ~f
 
+# Contradictory causes statements
+OpenTheDoor causes open if hasCard
+OpenTheDoor causes ~open if ~hasCode
+
 # Yale Shooting Problem (YSP)
 initially ~loaded
 initially alive
@@ -51,7 +55,6 @@ B causes ~v
 impossible B if ~q
 
 # Mike's busy day
-
 initially ~car_washed and ~lawn_mowed and ~gift_bought
 WASH_CAR causes car_washed if ~car_washed
 MOW_LAWN causes lawn_mowed if ~lawn_mowed

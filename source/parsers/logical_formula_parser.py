@@ -37,7 +37,6 @@ class LogicalFormulaParser:
             return None
         else:
             for and_statement in pyeda_formula.xs:
-                print(type(and_statement))
                 if isinstance(and_statement, AndOp):
                     and_statements.append(extract_and_statement(and_statement))
                 elif isinstance(and_statement, Variable) or isinstance(and_statement, Complement):

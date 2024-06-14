@@ -51,7 +51,7 @@ class CustomParser(ABC):
 
         logical_statements = self.logical_formula_parser.extract_logical_statements(formula)
         if logical_statements is None:
-            raise ValueError(f"Contradictory statement for {self.name} statement. In formula: {formula}")
+            return None
         for logical_statement in logical_statements:
             formula = replace_fluents_with_values(logical_statement, state)
             if eval(formula):
@@ -83,6 +83,9 @@ class InitiallyParser(CustomParser):
     
     def parse(self, statement: str) -> List:
         initial_logic = statement.split("initially")[1].strip()
+        for state in self.transition_graph.generate_possible_states():
+            assert self.evaluate_formula(initial_logic, state) is not None, f"Contradictory statement in formula: {statement}"
+
         return list(
             filter(lambda state: self.evaluate_formula(initial_logic, state), 
             self.transition_graph.generate_possible_states())
@@ -124,9 +127,12 @@ class CausesParser(CustomParser):
                     effect_formulas.append(effect_formula)
             
             for to_state in self.transition_graph.states:
+                if effect_formulas:
+                    formula = " and ".join(effect_formulas)
+                    assert self.evaluate_formula(formula, to_state) is not None, f"Inconsistent domain in formula(s): {statements}"   
+
                 if all(self.evaluate_formula(effect_formula, to_state) for effect_formula in effect_formulas) and \
-                        Edge(from_state, action, to_state) not in self.transition_graph.impossible_edges and \
-                        self.precondition_met(precondition_formula, from_state):
+                        Edge(from_state, action, to_state) not in self.transition_graph.impossible_edges:
                     difference = self.diff_between_states(from_state, to_state)
                     updates.append((to_state, difference, len(difference)))
             
