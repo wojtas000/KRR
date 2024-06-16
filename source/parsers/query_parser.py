@@ -20,14 +20,14 @@ class QueryParser:
 
     def find_last_state(self, state, actions):
         """Finds the last state after performing the sequence of actions from the given state."""
-        subcost = 0
+        cost = 0
         for action in actions:
             state, subcost = self.find_next_state(state, action.replace(' ',''))
             if state is None:
-                return None, subcost
+                return None, 0
             else:
-                subcost += subcost
-        return state, subcost
+                cost += subcost
+        return state, cost
 
     @staticmethod
     def state_satisfies(state, conditions):
@@ -88,6 +88,7 @@ class QueryParser:
         for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, total_cost = self.find_last_state(state, actions)
+                st.write('total_cost', total_cost)
                 if final_state is None or total_cost > max_cost:
                     return False
         return True
@@ -97,6 +98,7 @@ class QueryParser:
         for state in list(self.graph.nodes):
             if self.state_satisfies(state, pi):
                 final_state, total_cost = self.find_last_state(state, actions)
+                st.write('total_cost', total_cost)
                 if final_state is not None and total_cost <= max_cost:
                     return True
         return False
