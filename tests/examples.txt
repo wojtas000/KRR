@@ -1,5 +1,5 @@
 # Contradictory initially statement
-initially f and ~f
+initially f & ~f
 
 # Contradictory causes statements
 OpenTheDoor causes open if hasCard
@@ -55,7 +55,7 @@ B causes ~v
 impossible B if ~q
 
 # Mike's busy day
-initially ~car_washed and ~lawn_mowed and ~gift_bought
+initially ~car_washed & ~lawn_mowed & ~gift_bought
 WASH_CAR causes car_washed if ~car_washed
 MOW_LAWN causes lawn_mowed if ~lawn_mowed
 BUY_GIFT causes gift_bought if ~gift_bought
