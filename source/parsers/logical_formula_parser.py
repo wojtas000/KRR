@@ -9,17 +9,6 @@ class LogicalFormulaParser:
 
     def normalize_to_dnf(self, formula: str) -> expr:
 
-        replacements = {
-            "and": "&",
-            "or": "|",
-            "not": "~",
-            "implies": "=>",
-            "iff": "<=>",
-        }
-
-        for word, symbol in replacements.items():
-            formula = formula.replace(word, symbol)
-
         return expr(formula).to_dnf()
 
 
