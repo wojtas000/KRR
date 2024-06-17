@@ -8,7 +8,6 @@ from typing import List
 class LogicalFormulaParser:
 
     def normalize_to_dnf(self, formula: str) -> expr:
-
         return expr(formula).to_dnf()
 
 

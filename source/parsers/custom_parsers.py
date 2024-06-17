@@ -128,7 +128,7 @@ class CausesParser(CustomParser):
             
             for to_state in self.transition_graph.states:
                 if effect_formulas:
-                    formula = " and ".join(effect_formulas)
+                    formula = " & ".join(effect_formulas)
                     assert self.evaluate_formula(formula, to_state) is not None, f"Inconsistent domain in formula(s): {statements}"   
 
                 if all(self.evaluate_formula(effect_formula, to_state) for effect_formula in effect_formulas) and \
