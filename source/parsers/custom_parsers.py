@@ -210,33 +210,36 @@ class AfterParser(CustomParser):
         return self.logical_formula_parser.extract_fluents(effect_formula)
     
     def parse(self, statement: str) -> None:
-        possible_initial_states = self.transition_graph.possible_initial_states
-        possible_ending_states = []
-        effect_formula, actions = map(str.strip, statement.split("after"))
-        actions = actions.split(",")[::-1] if "," in actions else [actions]
+        try:
+            possible_initial_states = self.transition_graph.possible_initial_states
+            possible_ending_states = []
+            effect_formula, actions = map(str.strip, statement.split("after"))
+            actions = actions.split(",")[::-1] if "," in actions else [actions]
 
-        # Find possible ending states
-        for logical_statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
-            for edge in self.transition_graph.edges:
-                if edge.action == actions[0]:
-                    fluent_dict = self.logical_formula_parser.extract_fluent_dict(logical_statement)
-                    if all(fluent in edge.target.fluents for fluent in fluent_dict):
-                        possible_ending_states.append(edge.target)
-
-        # Find possible initial states
-        possible_states = possible_ending_states
-        possible_states_prev = []
-        for action in actions:
-            for edge in self.transition_graph.edges:
-                if edge.action == action and edge.target in possible_states:
-                    possible_states_prev.append(edge.source)
-            if not possible_states_prev:
-                raise ValueError(f"Contradictory statement for after statement. In formula: {effect_formula}")
-            possible_states = possible_states_prev
-            possible_states_prev = []
+            # Find possible ending states
+            for logical_statement in self.logical_formula_parser.extract_logical_statements(effect_formula):
+                for edge in self.transition_graph.edges:
+                    if edge.action == actions[0]:
+                        fluent_dict = self.logical_formula_parser.extract_fluent_dict(logical_statement)
+                        if all(fluent in edge.target.fluents for fluent in fluent_dict):
+                            possible_ending_states.append(edge.target)
         
-        initial_states_for_removal = [state for state in possible_initial_states if state not in possible_states]
-        return initial_states_for_removal, possible_ending_states
+            # Find possible initial states
+            possible_states = possible_ending_states
+            possible_states_prev = []
+            for action in actions:
+                for edge in self.transition_graph.edges:
+                    if edge.action == action and edge.target in possible_states:
+                        possible_states_prev.append(edge.source)
+                if not possible_states_prev:
+                    raise ValueError(f"Contradictory statement for after statement. In formula: {effect_formula}")
+                possible_states = possible_states_prev
+                possible_states_prev = []
+            
+            initial_states_for_removal = [state for state in possible_initial_states if state not in possible_states]
+            return initial_states_for_removal, possible_ending_states
+        except:
+            return [], []
 
 
 class AlwaysParser(CustomParser):
